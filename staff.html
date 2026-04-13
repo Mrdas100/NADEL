@@ -212,19 +212,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 // FIREBASE CONFIG
 // ══════════════════════════════════════════════
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDalHyDKZxaUB8QIc_H5h-Obkjp7CpMz_k",
+  authDomain: "nadelapp-9ec65.firebaseapp.com",
+  projectId: "nadelapp-9ec65",
+  storageBucket: "nadelapp-9ec65.firebasestorage.app",
+  messagingSenderId: "35096470316",
+  appId: "1:35096470316:web:a36af035d233aa54094289",
+  measurementId: "G-7H6BFZNS1H"
 };
 
 var db=null, auth=null, FB_OK=false;
 var currentUser=null, userRole="admin";
 
 (function initFB(){
-  if(FIREBASE_CONFIG.apiKey==="YOUR_API_KEY"){
+  if(FIREBASE_CONFIG.apiKey==="DISABLED"){
     document.getElementById("l-fb-warn").style.display="block";
     return;
   }
