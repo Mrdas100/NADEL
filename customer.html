@@ -12,6 +12,7 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
 :root{
   --bg:#0d0800;--bg2:#0a0600;--bg3:#070400;
@@ -167,6 +168,27 @@ input,textarea,select{font-family:var(--font);outline:none;}
 .loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:20px;color:var(--tx3);font-size:14px;}
 .spin{width:20px;height:20px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* OTP PAGE */
+.otp-page{position:fixed;inset:0;background:var(--bg);z-index:7000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;}
+.otp-page.on{display:flex;}
+.otp-card{background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:28px;width:100%;max-width:360px;}
+.phone-inp-wrap{display:flex;align-items:center;background:var(--card);border:1.5px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:border-color .2s;}
+.phone-inp-wrap:focus-within{border-color:var(--ac);}
+.phone-flag{padding:0 12px;font-size:20px;flex-shrink:0;}
+.phone-prefix{color:var(--ac);font-weight:800;font-size:15px;padding-right:4px;flex-shrink:0;}
+.phone-inp{flex:1;background:transparent;border:none;color:var(--tx);font-size:16px;padding:13px 12px 13px 0;direction:ltr;font-family:var(--font);}
+.phone-inp::placeholder{color:var(--tx4);direction:rtl;}
+.otp-box-row{display:flex;gap:10px;justify-content:center;margin:20px 0;}
+.otp-box{width:46px;height:56px;background:var(--card);border:1.5px solid var(--bd);border-radius:12px;color:var(--tx);font-size:22px;font-weight:800;text-align:center;font-family:var(--font);}
+.otp-box:focus{border-color:var(--ac);outline:none;background:var(--ac-bg);}
+.otp-btn{width:100%;background:var(--ac);border:none;border-radius:14px;padding:14px 0;color:#fff;font-weight:800;font-size:16px;box-shadow:0 4px 18px var(--ac-bg);margin-top:4px;}
+.otp-btn:active{transform:scale(.98);}
+.otp-btn:disabled{opacity:.5;}
+.otp-err{color:#f87171;font-size:13px;margin-top:8px;min-height:18px;}
+.otp-back{background:none;border:none;color:var(--tx3);font-size:13px;margin-top:12px;text-decoration:underline;}
+.resend-row{margin-top:14px;color:var(--tx3);font-size:13px;}
+.resend-btn{color:var(--ac);font-weight:700;background:none;border:none;font-size:13px;font-family:var(--font);}
+.resend-btn:disabled{color:var(--tx4);cursor:default;}
 </style>
 </head>
 <body>
@@ -265,6 +287,46 @@ input,textarea,select{font-family:var(--font);outline:none;}
   </div>
 </div>
 
+<!-- OTP FLOW OVERLAY -->
+<div id="otp-phone-page" class="otp-page">
+  <div style="font-size:48px;margin-bottom:12px">📱</div>
+  <h2 id="otp-cafe-title" style="color:var(--ac);font-weight:900;font-size:22px;margin:0 0 6px">شاهي قمرا</h2>
+  <p style="color:var(--tx2);font-size:13px;margin-bottom:24px">أدخل رقم جوالك لإتمام الطلب</p>
+  <div class="otp-card">
+    <div class="phone-inp-wrap">
+      <span class="phone-flag">🇸🇦</span>
+      <span class="phone-prefix">+966</span>
+      <input id="otp-phone" class="phone-inp" type="tel" inputmode="numeric" placeholder="5XXXXXXXX" maxlength="9"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')sendOTP()">
+    </div>
+    <!-- invisible recaptcha -->
+    <div id="recaptcha-container"></div>
+    <button class="otp-btn" onclick="sendOTP()" id="otp-send-btn">📨 إرسال كود التحقق</button>
+    <div class="otp-err" id="otp-phone-err"></div>
+    <button class="otp-back" onclick="cancelOTP()">← رجوع</button>
+  </div>
+</div>
+
+<div id="otp-verify-page" class="otp-page">
+  <div style="font-size:48px;margin-bottom:12px">🔐</div>
+  <h2 style="color:var(--ac);font-weight:900;font-size:22px;margin:0 0 6px">كود التحقق</h2>
+  <p id="otp-sent-to" style="color:var(--tx2);font-size:13px;margin-bottom:24px">تم إرسال كود SMS</p>
+  <div class="otp-card">
+    <div class="otp-box-row" id="otp-boxes">
+      <input class="otp-box" type="tel" inputmode="numeric" maxlength="1" id="ob0" oninput="otpInput(this,0)" onkeydown="otpKey(this,0,event)">
+      <input class="otp-box" type="tel" inputmode="numeric" maxlength="1" id="ob1" oninput="otpInput(this,1)" onkeydown="otpKey(this,1,event)">
+      <input class="otp-box" type="tel" inputmode="numeric" maxlength="1" id="ob2" oninput="otpInput(this,2)" onkeydown="otpKey(this,2,event)">
+      <input class="otp-box" type="tel" inputmode="numeric" maxlength="1" id="ob3" oninput="otpInput(this,3)" onkeydown="otpKey(this,3,event)">
+      <input class="otp-box" type="tel" inputmode="numeric" maxlength="1" id="ob4" oninput="otpInput(this,4)" onkeydown="otpKey(this,4,event)">
+      <input class="otp-box" type="tel" inputmode="numeric" maxlength="1" id="ob5" oninput="otpInput(this,5)" onkeydown="otpKey(this,5,event)">
+    </div>
+    <button class="otp-btn" onclick="verifyOTP()" id="otp-verify-btn">✅ تحقق</button>
+    <div class="otp-err" id="otp-verify-err"></div>
+    <div class="resend-row">لم يصلك الكود؟ <button class="resend-btn" id="resend-btn" onclick="resendOTP()" disabled>إعادة الإرسال (<span id="resend-timer">60</span>)</button></div>
+    <button class="otp-back" onclick="backToPhone()">← تغيير الرقم</button>
+  </div>
+</div>
+
 <!-- PAGE 0: SPLASH -->
 <div id="p0" class="page on">
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;position:relative;">
@@ -349,15 +411,15 @@ var FB_OK = false;
     return;
   }
   try {
-    firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     FB_OK = true;
-    setSafe("fb-status", "🟢 متصل — Firebase");
+    setSafe("fb-status", "🟢 متصل");
     loadMenuFromFB();
     loadSettingsFromFB();
   } catch(e) {
     console.warn("Firebase init error:", e);
-    setSafe("fb-status", "⚠️ خطأ في الاتصال — يعمل محلياً");
+    setSafe("fb-status", "⚠️ خطأ في الاتصال");
   }
 })();
 
@@ -651,21 +713,154 @@ function showToast(msg, ok) {
   setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },3500);
 }
 
-function startWithPhone() {
-  var phone = document.getElementById("customer-phone").value.trim();
-  if (!phone || phone.length < 9) {
-    var wrap = document.getElementById("phone-wrap");
-    wrap.style.borderColor = "#f87171";
-    wrap.style.animation = "shake .3s ease";
-    setTimeout(function(){ wrap.style.borderColor="var(--bd)"; wrap.style.animation=""; }, 800);
-    showToast("أدخل رقم جوالك (05xxxxxxxx)", false);
-    return;
-  }
-  customerPhone = phone;
-  openTP();
+// ── OTP FLOW ──
+var customerPhone = "";
+var recaptchaVerifier = null;
+var confirmationResult = null;
+var resendInterval = null;
+var FB_AUTH = null;
+
+function initFBAuth(){
+  if(!FB_OK) return;
+  try {
+    FB_AUTH = firebase.auth();
+  } catch(e){}
 }
 
-var customerPhone = "";
+function openOTPFlow(){
+  if(!FB_OK){
+    // No Firebase — ask for phone as plain text then proceed
+    var phone = prompt("أدخل رقم جوالك:", "05");
+    if(!phone||phone.trim().length<9){ showToast("أدخل رقم صحيح",false); return; }
+    customerPhone = phone.trim();
+    openTP(); return;
+  }
+  setSafe("otp-cafe-title", D.cn||savedSettings.cafeName||"شاهي قمرا");
+  document.getElementById("otp-phone").value="";
+  document.getElementById("otp-phone-err").textContent="";
+  document.getElementById("otp-phone-page").classList.add("on");
+  // Init invisible reCAPTCHA
+  if(!recaptchaVerifier){
+    try {
+      recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container",{
+        "size":"invisible",
+        "callback":function(){ console.log("recaptcha ok"); }
+      });
+      recaptchaVerifier.render().catch(function(){});
+    } catch(e){ console.warn("recaptcha init:", e); }
+  }
+  setTimeout(function(){ document.getElementById("otp-phone").focus(); }, 300);
+}
+
+function sendOTP(){
+  var raw = document.getElementById("otp-phone").value.replace(/\s/g,"");
+  if(!/^[0-9]{9}$/.test(raw)){
+    document.getElementById("otp-phone-err").textContent="أدخل 9 أرقام بعد +966 (مثال: 512345678)";
+    return;
+  }
+  var fullPhone = "+966" + raw;
+  customerPhone = "0" + raw; // store local format
+  var btn = document.getElementById("otp-send-btn");
+  btn.disabled=true; btn.innerHTML='<span class="spin" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:6px"></span> جاري الإرسال...';
+  document.getElementById("otp-phone-err").textContent="";
+  if(!recaptchaVerifier){
+    recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container",{"size":"invisible"});
+  }
+  firebase.auth().signInWithPhoneNumber(fullPhone, recaptchaVerifier)
+    .then(function(result){
+      confirmationResult = result;
+      btn.disabled=false; btn.textContent="📨 إرسال كود التحقق";
+      document.getElementById("otp-phone-page").classList.remove("on");
+      document.getElementById("otp-verify-page").classList.add("on");
+      setSafe("otp-sent-to","تم إرسال كود لـ +966" + raw);
+      // clear boxes
+      for(var i=0;i<6;i++){ var b=document.getElementById("ob"+i); if(b) b.value=""; }
+      document.getElementById("ob0").focus();
+      startResendTimer();
+    })
+    .catch(function(e){
+      btn.disabled=false; btn.textContent="📨 إرسال كود التحقق";
+      var msg = "خطأ في إرسال الكود";
+      if(e.code==="auth/invalid-phone-number")   msg="رقم الجوال غير صحيح";
+      else if(e.code==="auth/too-many-requests") msg="محاولات كثيرة، انتظر قليلاً";
+      else if(e.code==="auth/captcha-check-failed") msg="تحقق من الاتصال وأعد المحاولة";
+      document.getElementById("otp-phone-err").textContent=msg;
+      // reset recaptcha
+      recaptchaVerifier=null;
+    });
+}
+
+function otpInput(el, idx){
+  el.value = el.value.replace(/[^0-9]/g,"");
+  if(el.value && idx < 5) document.getElementById("ob"+(idx+1)).focus();
+  // auto-verify when all filled
+  var code=""; for(var i=0;i<6;i++) code+=(document.getElementById("ob"+i).value||"");
+  if(code.length===6) verifyOTP();
+}
+function otpKey(el, idx, e){
+  if(e.key==="Backspace"&&!el.value&&idx>0) document.getElementById("ob"+(idx-1)).focus();
+}
+
+function verifyOTP(){
+  if(!confirmationResult){ document.getElementById("otp-verify-err").textContent="أرسل الكود أولاً"; return; }
+  var code=""; for(var i=0;i<6;i++) code+=(document.getElementById("ob"+i).value||"");
+  if(code.length<6){ document.getElementById("otp-verify-err").textContent="أدخل الكود كاملاً (6 أرقام)"; return; }
+  var btn=document.getElementById("otp-verify-btn");
+  btn.disabled=true; btn.innerHTML='<span class="spin" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:6px"></span> جاري التحقق...';
+  document.getElementById("otp-verify-err").textContent="";
+  confirmationResult.confirm(code)
+    .then(function(result){
+      btn.disabled=false; btn.textContent="✅ تحقق";
+      clearResendTimer();
+      document.getElementById("otp-verify-page").classList.remove("on");
+      showToast("✅ تم التحقق!",true);
+      openTP();
+    })
+    .catch(function(e){
+      btn.disabled=false; btn.textContent="✅ تحقق";
+      var msg="كود خاطئ، حاول مرة أخرى";
+      if(e.code==="auth/code-expired") msg="انتهت صلاحية الكود، أعد الإرسال";
+      document.getElementById("otp-verify-err").textContent=msg;
+      // shake boxes
+      var row=document.getElementById("otp-boxes");
+      row.style.animation="shake .3s ease";
+      setTimeout(function(){row.style.animation="";},500);
+    });
+}
+
+function startResendTimer(){
+  var secs=60;
+  setSafe("resend-timer",secs);
+  var btn=document.getElementById("resend-btn"); if(btn) btn.disabled=true;
+  clearResendTimer();
+  resendInterval=setInterval(function(){
+    secs--;
+    setSafe("resend-timer",secs);
+    if(secs<=0){ clearResendTimer(); var b=document.getElementById("resend-btn"); if(b){b.disabled=false; b.innerHTML="إعادة الإرسال";} }
+  },1000);
+}
+function clearResendTimer(){ if(resendInterval){clearInterval(resendInterval);resendInterval=null;} }
+
+function resendOTP(){
+  clearResendTimer();
+  document.getElementById("otp-verify-page").classList.remove("on");
+  document.getElementById("otp-phone-page").classList.add("on");
+  recaptchaVerifier=null;
+  confirmationResult=null;
+  document.getElementById("otp-phone-err").textContent="";
+  setTimeout(function(){ openOTPFlow(); },100);
+}
+
+function backToPhone(){
+  clearResendTimer();
+  document.getElementById("otp-verify-page").classList.remove("on");
+  document.getElementById("otp-phone-page").classList.add("on");
+  document.getElementById("otp-phone-err").textContent="";
+}
+
+function cancelOTP(){
+  document.getElementById("otp-phone-page").classList.remove("on");
+}
 
 function openTP() {
   savedSettings = lSettings();

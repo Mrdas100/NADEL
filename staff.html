@@ -224,6 +224,7 @@ const FIREBASE_CONFIG = {
 
 var db=null, auth=null, FB_OK=false;
 var currentUser=null, userRole="admin";
+var _authReady=false;
 
 (function initFB(){
   if(FIREBASE_CONFIG.apiKey==="DISABLED"){
@@ -231,67 +232,146 @@ var currentUser=null, userRole="admin";
     return;
   }
   try{
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db=firebase.firestore();
-    auth=firebase.auth();
+    // prevent double-init
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db  = firebase.firestore();
+    auth= firebase.auth();
+    // persist session across refreshes
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
     FB_OK=true;
+
     auth.onAuthStateChanged(function(user){
-      if(user){currentUser=user; loadUserRole(user.uid);}
+      if(_authReady) return; // handled once
+      _authReady=true;
+      if(user){
+        currentUser=user;
+        loadUserRole(user.uid);
+      }
+      // else: stay on login screen
     });
-  }catch(e){document.getElementById("l-fb-warn").style.display="block";}
+  }catch(e){
+    console.error("Firebase init error:",e);
+    document.getElementById("l-fb-warn").style.display="block";
+  }
 })();
 
-async function loadUserRole(uid){
-  if(!db) return;
-  try{
-    var doc=await db.collection("users").doc(uid).get();
-    if(doc.exists){ userRole=doc.data().role||"waiter"; var name=doc.data().name||currentUser.email; setSafe("user-badge","👤 "+name+" ("+userRole+")"); navToRole(); }
-    else{ setSafe("l-err","لم يتم العثور على صلاحيات. تواصل مع المدير."); doLogout(); }
-  }catch(e){ navToRole(); }
+function loadUserRole(uid){
+  if(!db){ navToRole(); return; }
+  db.collection("users").doc(uid).get()
+    .then(function(doc){
+      if(doc.exists){
+        userRole = doc.data().role||"waiter";
+        var name  = doc.data().name||currentUser.email;
+        setSafe("user-badge","👤 "+name+" · "+roleLabel(userRole));
+        navToRole();
+      } else {
+        // user exists in Auth but not in Firestore — create default admin record
+        return db.collection("users").doc(uid).set({
+          name: currentUser.email,
+          role: "admin",
+          email: currentUser.email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function(){
+          userRole="admin";
+          setSafe("user-badge","👤 Admin");
+          navToRole();
+        });
+      }
+    })
+    .catch(function(e){
+      console.warn("loadUserRole error:",e);
+      // If Firestore rules block access, proceed with waiter role
+      userRole="waiter";
+      navToRole();
+    });
 }
+
+function roleLabel(r){ return r==="admin"?"مدير":r==="kitchen"?"مطبخ":"نادل"; }
 
 function doLogin(){
   if(!FB_OK){ skipLogin(); return; }
   var email=document.getElementById("l-email").value.trim();
-  var pass=document.getElementById("l-pass").value;
-  if(!email||!pass){ setSafe("l-err","أدخل البريد وكلمة المرور"); return; }
-  setSafe("l-err","");
-  document.getElementById("l-btn").innerHTML='<span class="spin"></span>جاري الدخول...';
+  var pass =document.getElementById("l-pass").value;
+  if(!email||!pass){
+    showLoginErr("أدخل البريد الإلكتروني وكلمة المرور");
+    return;
+  }
+  setLoginLoading(true);
+  _authReady=false; // allow onAuthStateChanged to fire again
   auth.signInWithEmailAndPassword(email,pass)
-    .catch(function(e){ document.getElementById("l-btn").textContent="🔐 دخول"; setSafe("l-err",e.code==="auth/wrong-password"?"كلمة المرور خاطئة":e.code==="auth/user-not-found"?"البريد غير مسجل":"خطأ في تسجيل الدخول"); });
+    .then(function(cred){
+      // onAuthStateChanged will handle navigation
+    })
+    .catch(function(e){
+      setLoginLoading(false);
+      var msg = "خطأ في تسجيل الدخول";
+      if(e.code==="auth/wrong-password"||e.code==="auth/invalid-credential") msg="كلمة المرور خاطئة";
+      else if(e.code==="auth/user-not-found")  msg="البريد الإلكتروني غير مسجل";
+      else if(e.code==="auth/invalid-email")   msg="صيغة البريد الإلكتروني غير صحيحة";
+      else if(e.code==="auth/too-many-requests")msg="محاولات كثيرة، حاول لاحقاً";
+      else if(e.code==="auth/network-request-failed") msg="تحقق من اتصال الإنترنت";
+      showLoginErr(msg);
+    });
 }
 
 function doRegister(){
-  if(!FB_OK){ alert("Firebase غير مضبوط"); return; }
+  if(!FB_OK){ showLoginErr("Firebase غير مضبوط"); return; }
   var email=document.getElementById("l-email").value.trim();
-  var pass=document.getElementById("l-pass").value;
-  var name=document.getElementById("r-name").value.trim();
-  var role=document.getElementById("r-role").value;
-  if(!email||!pass||!name){ setSafe("l-err","أكمل جميع الحقول"); return; }
-  auth.createUserWithEmailAndPassword(email,pass).then(function(cred){
-    return db.collection("users").doc(cred.user.uid).set({name,role,email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  }).catch(function(e){ setSafe("l-err",e.message); });
+  var pass =document.getElementById("l-pass").value;
+  var name =document.getElementById("r-name").value.trim();
+  var role =document.getElementById("r-role").value;
+  if(!email||!pass||!name){ showLoginErr("أكمل جميع الحقول"); return; }
+  if(pass.length<6){ showLoginErr("كلمة المرور 6 أحرف على الأقل"); return; }
+  setLoginLoading(true,"جاري إنشاء الحساب...");
+  _authReady=false;
+  auth.createUserWithEmailAndPassword(email,pass)
+    .then(function(cred){
+      return db.collection("users").doc(cred.user.uid).set({
+        name:name, role:role, email:email,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    })
+    .then(function(){ setLoginLoading(false); })
+    .catch(function(e){
+      setLoginLoading(false);
+      var msg=e.message;
+      if(e.code==="auth/email-already-in-use") msg="البريد مستخدم بالفعل، سجّل دخولك";
+      else if(e.code==="auth/weak-password")   msg="كلمة المرور ضعيفة جداً";
+      showLoginErr(msg);
+    });
 }
 
-function showReg(){ document.getElementById("reg-form").style.display=document.getElementById("reg-form").style.display==="none"?"block":"none"; }
+function showLoginErr(msg){
+  var el=document.getElementById("l-err"); if(el){el.textContent=msg; el.style.display="block";}
+}
+function setLoginLoading(on,txt){
+  var btn=document.getElementById("l-btn");
+  if(!btn)return;
+  if(on) btn.innerHTML='<span class="spin"></span>'+(txt||"جاري الدخول...");
+  else btn.textContent="🔐 دخول";
+}
+
+function showReg(){
+  var f=document.getElementById("reg-form");
+  f.style.display=f.style.display==="none"?"block":"none";
+}
 
 function doLogout(){
-  if(auth) auth.signOut();
+  _authReady=false;
+  if(auth) auth.signOut().then(function(){ nav("s-login"); detachListeners(); });
+  else { nav("s-login"); detachListeners(); }
   currentUser=null; userRole="admin";
-  nav("s-login"); detachListeners();
 }
 
 function skipLogin(){
   FB_OK=false; userRole="admin";
-  setSafe("user-badge","⚠️ بدون Firebase");
+  setSafe("user-badge","⚠️ وضع غير متصل");
   loadS(); applyTheme(); navToRole();
 }
 
 function navToRole(){
-  loadS(); applyTheme();
-  setLangUI();
-  nav("s-home"); buildHome();
-  startListeners();
+  loadS(); applyTheme(); setLangUI();
+  nav("s-home"); buildHome(); startListeners();
 }
 
 // ══════════════════════════════════════════════
