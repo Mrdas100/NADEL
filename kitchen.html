@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fef8ee">
+<title>شاهي قمرا — المطبخ</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Noto+Sans+Bengali:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#fef8ee;--bg2:#fdf3dd;--bg3:#f5e8c0;--ac:#c8860a;--ac-bg:rgba(200,134,10,.10);--ac-bd:rgba(200,134,10,.25);--tx:#1a0a00;--tx2:#7a5010;--tx3:#b08040;--tx4:#d4a060;--card:#ffffff;--bd:#e8d8a0;--sh:0 2px 10px rgba(150,90,0,.08);}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Cairo','Noto Sans Bengali',sans-serif;direction:rtl;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;}
+button{font-family:'Cairo','Noto Sans Bengali',sans-serif;cursor:pointer;border:none;outline:none;}
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--bd);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.bk{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx2);padding:6px 12px;font-size:15px;}
+/* LANG */
+.lb{display:flex;gap:6px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.lbtn{padding:5px 13px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--tx3);font-size:12px;font-weight:700;}
+.lbtn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
+/* STATS */
+.stats{display:flex;gap:10px;padding:12px 14px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);}
+.stat{flex:1;border-radius:10px;padding:8px 0;text-align:center;}
+/* FILTERS */
+.filters{display:flex;gap:8px;padding:10px 14px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);}
+.fbtn{border-radius:20px;padding:6px 14px;font-weight:700;font-size:12px;background:var(--card);border:1px solid var(--bd);color:var(--tx3);}
+.fbtn.on{background:#065f46;border-color:#10b981;color:#6ee7b7;}
+/* ORDERS */
+.orders{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:14px;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--bd);}
+.ocard{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid #f59e0b;box-shadow:var(--sh);}
+.ocard.preparing{border-left-color:#3b82f6;}
+.ocard.ready{border-left-color:#10b981;}
+.ocard-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.bdg{border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;}
+.bp{background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.3);}
+.br{background:rgba(59,130,246,.12);color:#1d4ed8;border:1px solid rgba(59,130,246,.3);}
+.bg{background:rgba(16,185,129,.12);color:#047857;border:1px solid rgba(16,185,129,.3);}
+.bdd{background:rgba(107,114,128,.1);color:#4b5563;border:1px solid rgba(107,114,128,.25);}
+.timer{font-size:12px;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,.1);color:#b45309;}
+.timer.late{background:rgba(220,38,38,.1);color:#dc2626;}
+.item-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;padding:5px 0;border-bottom:1px solid var(--bd);}
+.item-row:last-child{border-bottom:none;}
+.item-name{color:var(--tx);font-weight:700;font-size:13px;}
+.item-sub{color:var(--tx3);font-size:11px;margin-top:1px;}
+.item-qty{background:var(--ac-bg);border:1px solid var(--ac-bd);border-radius:8px;padding:2px 10px;font-weight:800;font-size:13px;color:var(--ac);}
+.action-row{display:flex;gap:8px;margin-top:12px;}
+.abtn{flex:1;border:none;border-radius:10px;padding:10px 0;font-weight:700;font-size:14px;font-family:'Cairo',sans-serif;}
+.abtn.prep{background:#1e3a8a;color:#93c5fd;}
+.abtn.ready{background:#065f46;color:#6ee7b7;}
+.abtn.done{background:#4a1942;color:#e879f9;}
+.abtn:active{transform:scale(.97);}
+.empty{text-align:center;padding:60px 24px;}
+.empty .ei{font-size:54px;margin-bottom:14px;}
+.empty .em{color:var(--tx3);font-weight:700;font-size:16px;}
+.empty .es{color:var(--tx4);font-size:13px;margin-top:6px;}
+/* TOAST */
+#toasts{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.toast{background:var(--card);border:1px solid var(--bd);color:var(--tx);padding:9px 15px;border-radius:10px;font-size:13px;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,.1);animation:pop .3s ease;}
+.toast.ok{border-color:#10b981;color:#047857;}
+@keyframes pop{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+/* NEW ORDER PULSE */
+@keyframes pulse{0%,100%{box-shadow:0 2px 10px rgba(150,90,0,.08)}50%{box-shadow:0 0 0 4px rgba(245,158,11,.3)}}
+.ocard.new{animation:pulse 1.5s ease 3;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spn .7s linear infinite;vertical-align:middle;}
+@keyframes spn{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<div class="hdr">
+  <a href="index.html" class="bk">←</a>
+  <span style="font-size:20px">🍳</span>
+  <span style="color:var(--ac);font-weight:800;font-size:16px" id="k-title">شاشة المطبخ</span>
+  <span style="margin-right:auto;font-size:11px;color:var(--tx4)" id="fb-st">جاري الاتصال...</span>
+</div>
+
+<div class="lb">
+  <button class="lbtn on" id="lb-ar" onclick="setLang('ar')">العربية</button>
+  <button class="lbtn" id="lb-en" onclick="setLang('en')">English</button>
+  <button class="lbtn" id="lb-bn" onclick="setLang('bn')" style="font-family:'Noto Sans Bengali',sans-serif">বাংলা</button>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="filters" id="filters"></div>
+
+<div class="orders" id="orders"></div>
+
+<script>
+// ══ FIREBASE ══
+const FB_CFG={apiKey:"AIzaSyDalHyDKZxaUB8QIc_H5h-Obkjp7CpMz_k",authDomain:"nadelapp-9ec65.firebaseapp.com",projectId:"nadelapp-9ec65",storageBucket:"nadelapp-9ec65.firebasestorage.app",messagingSenderId:"35096470316",appId:"1:35096470316:web:a36af035d233aa54094289"};
+var db=null, FB_OK=false, orderListener=null;
+(function(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+    db=firebase.firestore(); FB_OK=true;
+    setSafe("fb-st","🟢 متصل");
+    startListener();
+  } catch(e){ setSafe("fb-st","⚠️ محلي"); startPoll(); }
+})();
+
+// ══ LANGUAGE ══
+var LANG = localStorage.getItem("qamra_lang") || "ar";
+var TR={
+  ar:{kitchen:"شاشة المطبخ",pending:"في الانتظار",preparing:"قيد التحضير",ready:"جاهز ✅",delivered:"تم التسليم",start:"👨‍🍳 بدء التحضير",mkready:"✅ جاهز",mkdone:"🎉 تم التسليم",waiting:"في الانتظار",total:"إجمالي",no_orders:"لا طلبات",wait_msg:"في انتظار الطلبات",tbl:"طاولة",f_pending:"⏳ انتظار",f_prep:"👨‍🍳 تحضير",f_all:"📋 الكل",customer:"عميل",mins:"د"},
+  en:{kitchen:"Kitchen",pending:"Pending",preparing:"Preparing",ready:"Ready ✅",delivered:"Delivered",start:"👨‍🍳 Start",mkready:"✅ Ready",mkdone:"🎉 Done",waiting:"Pending",total:"Total",no_orders:"No orders",wait_msg:"Waiting for orders",tbl:"Table",f_pending:"⏳ Pending",f_prep:"👨‍🍳 Prep",f_all:"📋 All",customer:"Customer",mins:"min"},
+  bn:{kitchen:"রান্নাঘর",pending:"অপেক্ষায়",preparing:"প্রস্তুত হচ্ছে",ready:"প্রস্তুত ✅",delivered:"সরবরাহ",start:"👨‍🍳 শুরু",mkready:"✅ প্রস্তুত",mkdone:"🎉 সম্পন্ন",waiting:"অপেক্ষা",total:"মোট",no_orders:"কোনো অর্ডার নেই",wait_msg:"অপেক্ষায়",tbl:"টেবিল",f_pending:"⏳ অপেক্ষা",f_prep:"👨‍🍳 প্রস্তুত",f_all:"📋 সব",customer:"গ্রাহক",mins:"মিনিট"}
+};
+// Product name translations
+var IT={
+  1:{en:"Cheese Samosa",bn:"পনির সামোসা"},2:{en:"Chicken Samosa",bn:"মুরগির সামোসা"},3:{en:"Meat Samosa",bn:"মাংসের সামোসা"},4:{en:"Mixed Samosa",bn:"মিক্স সামোসা"},
+  5:{en:"Meat Manaqeesh",bn:"মাংসের মানাকিশ"},6:{en:"Chicken Manaqeesh",bn:"মুরগির মানাকিশ"},7:{en:"Labneh Honey",bn:"লাবনেহ মধু"},8:{en:"Mozzarella",bn:"মোজারেলা"},9:{en:"Tahini Cheese",bn:"তাহিনি পনির"},10:{en:"Labneh Thyme",bn:"লাবনেহ থাইম"},
+  11:{en:"Mixed Pancake",bn:"মিক্স প্যানকেক"},12:{en:"Nutella Pancake",bn:"নুটেলা প্যানকেক"},13:{en:"Lotus Pancake",bn:"লোটাস প্যানকেক"},14:{en:"Pistachio Pancake",bn:"পিস্তা প্যানকেক"},
+  15:{en:"Honeycomb",bn:"হানিকম্ব"},16:{en:"Meat Pie",bn:"মাংসের পাই"},17:{en:"Mozzarella Pie",bn:"মোজারেলা পাই"},18:{en:"Mixed Cheese Pie",bn:"পনির পাই"},
+  19:{en:"Steam Tea",bn:"ভাপ চা"},20:{en:"Qamra Tea",bn:"কামরা চা"},21:{en:"Iraqi Tea",bn:"ইরাকি চা"},22:{en:"Karak Tea",bn:"কারাক চা"},23:{en:"Milk Tea",bn:"দুধ চা"},24:{en:"Taifi Tea",bn:"তায়েফি চা"},25:{en:"Chamomile",bn:"ক্যামোমাইল"},26:{en:"Turkish Coffee",bn:"তুর্কি কফি"},27:{en:"Turkish w/Milk",bn:"দুধ কফি"},28:{en:"V60 Hot",bn:"V60 গরম"},29:{en:"Tea Pot",bn:"চায়ের কেটলি"},
+  30:{en:"Smoked Nuts",bn:"স্মোকড বাদাম"},31:{en:"Plain Nuts",bn:"সাধারণ বাদাম"},32:{en:"Egyptian Seeds",bn:"মিশরীয় বীজ"},33:{en:"Sunflower Seeds",bn:"সূর্যমুখী"},
+  34:{en:"Saudi Coffee Pot",bn:"সৌদি কফি পট"},35:{en:"Hibiscus",bn:"হিবিস্কাস"},36:{en:"Lemon Mint Cold",bn:"লেবু পুদিনা"},37:{en:"V60 Cold",bn:"V60 ঠান্ডা"},38:{en:"Cold Brew",bn:"কোল্ড ব্রু"},
+  39:{en:"Tea Thermos Fill",bn:"চা থার্মোস"},40:{en:"Coffee Thermos Fill",bn:"কফি থার্মোস"},41:{en:"Tea Thermos Sale",bn:"চা থার্মোস"},42:{en:"Coffee Thermos Sale",bn:"কফি থার্মোস"},
+  43:{en:"Baloot Game",bn:"বালুত গেম"},44:{en:"Jackaroo Game",bn:"জাকারু গেম"},45:{en:"Match Booking",bn:"ম্যাচ বুকিং"}
+};
+
+function t(k){ return (TR[LANG]&&TR[LANG][k]) || TR.ar[k] || k; }
+function iName(item){
+  if(LANG==="ar"||!item.id) return item.name||item.display||"";
+  var n=(IT[item.id]&&IT[item.id][LANG]);
+  return n ? n+(item.sizeName?" ("+item.sizeName+")":"") : (item.display||item.name||"");
+}
+function setLang(lang){
+  LANG=lang; localStorage.setItem("qamra_lang",lang);
+  var isRtl=lang!=="bn"; document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr"); document.body.style.direction=isRtl?"rtl":"ltr";
+  ["ar","en","bn"].forEach(l=>{var el=document.getElementById("lb-"+l);if(el)el.classList.toggle("on",l===lang);});
+  setSafe("k-title",t("kitchen"));
+  render();
+}
+
+// ══ STATE ══
+var orders = [];
+var filter = "pending"; // pending | preparing | all
+var lastPendingCount = 0;
+
+// ══ FIREBASE LISTENER ══
+function startListener(){
+  if(!db) return;
+  orderListener = db.collection("orders")
+    .where("status","in",["pending","preparing","ready"])
+    .orderBy("createdAt","asc")
+    .onSnapshot(snap=>{
+      orders=[];
+      snap.forEach(d=>orders.push({fbId:d.id,...d.data(),id:d.id}));
+      checkBeep();
+      render();
+    }, err=>{ setSafe("fb-st","⚠️ "+err.code); startPoll(); });
+}
+function startPoll(){
+  setInterval(()=>{
+    try{ var stored=JSON.parse(localStorage.getItem("qamra_orders")||"[]"); orders=stored.filter(o=>o.status!=="delivered"); render(); }catch(e){}
+  }, 3000);
+}
+function updOrder(id,status,fbId){
+  var label={preparing:t("preparing"),ready:t("ready"),delivered:t("delivered")};
+  if(FB_OK&&db){
+    var docId=fbId||id;
+    db.collection("orders").doc(String(docId)).update({status}).then(()=>toast(label[status]||status,true)).catch(e=>{toast("خطأ: "+e.message,false);updateLocal(id,status);});
+  } else { updateLocal(id,status); toast(label[status]||status,true); }
+}
+function updateLocal(id,status){
+  try{
+    var ors=JSON.parse(localStorage.getItem("qamra_orders")||"[]");
+    var idx=ors.findIndex(o=>o.id==id);if(idx>=0){ors[idx].status=status;localStorage.setItem("qamra_orders",JSON.stringify(ors));}
+    orders=ors.filter(o=>o.status!=="delivered"); render();
+  }catch(e){}
+}
+
+// ══ BEEP ══
+function checkBeep(){
+  var pCount=orders.filter(o=>o.status==="pending").length;
+  if(pCount>lastPendingCount) playBeep();
+  lastPendingCount=pCount;
+}
+function playBeep(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,220,440].forEach(delay=>{
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=880;o.type="sine";
+      g.gain.setValueAtTime(0,ctx.currentTime+delay/1000);
+      g.gain.linearRampToValueAtTime(0.28,ctx.currentTime+delay/1000+0.05);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay/1000+0.28);
+      o.start(ctx.currentTime+delay/1000);o.stop(ctx.currentTime+delay/1000+0.3);
+    });
+  }catch(e){}
+}
+
+// ══ RENDER ══
+function getMinsSince(ts){
+  if(!ts) return null;
+  var ms; try{ ms=ts.toDate?ts.toDate().getTime():new Date(ts).getTime(); }catch(e){return null;}
+  return Math.floor((Date.now()-ms)/60000);
+}
+
+function render(){
+  // Stats
+  var pn=orders.filter(o=>o.status==="pending").length;
+  var rn=orders.filter(o=>o.status==="preparing").length;
+  var tot=orders.length;
+  document.getElementById("stats").innerHTML=[
+    {l:t("waiting"),c:pn,col:"#f59e0b",bg:"rgba(245,158,11,.1)"},
+    {l:t("preparing"),c:rn,col:"#3b82f6",bg:"rgba(59,130,246,.1)"},
+    {l:t("total"),c:tot,col:"#047857",bg:"rgba(16,185,129,.1)"}
+  ].map(s=>`<div class="stat" style="background:${s.bg}"><div style="color:${s.col};font-weight:900;font-size:24px">${s.c}</div><div style="color:${s.col}99;font-size:11px;font-weight:700">${s.l}</div></div>`).join("");
+
+  // Filters
+  document.getElementById("filters").innerHTML=[
+    {v:"pending",l:t("f_pending")},{v:"preparing",l:t("f_prep")},{v:"all",l:t("f_all")}
+  ].map(f=>`<button class="fbtn${filter===f.v?" on":""}" onclick="setFilter('${f.v}')">${f.l}</button>`).join("");
+
+  // Orders
+  var shown = filter==="all" ? orders : orders.filter(o=>o.status===filter);
+  var el=document.getElementById("orders");
+
+  if(!shown.length){
+    el.innerHTML='<div class="empty"><div class="ei">✅</div><div class="em">'+t("no_orders")+'</div><div class="es">'+t("wait_msg")+'</div></div>';
+    return;
+  }
+
+  el.innerHTML=shown.map(o=>{
+    var mins=getMinsSince(o.createdAt);
+    var isLate=mins!==null&&mins>10;
+    var bdgCls={pending:"bp",preparing:"br",ready:"bg",delivered:"bdd"}[o.status]||"bp";
+    var bdgTxt={pending:t("pending"),preparing:t("preparing"),ready:t("ready"),delivered:t("delivered")}[o.status]||t("pending");
+    var timerHtml=mins!==null?`<span class="timer${isLate?" late":""}">${mins} ${t("mins")}</span>`:"";
+
+    var itemsHtml=o.items.map(item=>{
+      var n=iName(item);
+      var arName=(LANG!=="ar"&&item.name)?`<div style="color:var(--tx3);font-size:10px;margin-top:1px">${item.name}${item.sizeName?" ("+item.sizeName+")":""}</div>`:"";
+      var note=item.note?`<div style="color:#b45309;font-size:11px;margin-top:2px">📝 ${item.note}</div>`:"";
+      return `<div class="item-row"><div><div class="item-name">${item.emoji||"🍽️"} ${n}</div>${arName}${note}</div><span class="item-qty">×${item.qty}</span></div>`;
+    }).join("");
+
+    var actionHtml="";
+    if(o.status==="pending")   actionHtml=`<button class="abtn prep" onclick="updOrder('${o.id}','preparing','${o.fbId||o.id}')">${t("start")}</button>`;
+    else if(o.status==="preparing") actionHtml=`<button class="abtn ready" onclick="updOrder('${o.id}','ready','${o.fbId||o.id}')">${t("mkready")}</button>`;
+    else if(o.status==="ready")     actionHtml=`<button class="abtn done" onclick="updOrder('${o.id}','delivered','${o.fbId||o.id}')">${t("mkdone")}</button>`;
+
+    var cardClass="ocard"+(" "+o.status)+(mins!==null&&mins<1?" new":"");
+    return `<div class="${cardClass}">
+      <div class="ocard-hdr">
+        <div style="display:flex;align-items:center;gap:8px"><span class="bdg ${bdgCls}">${bdgTxt}</span>${timerHtml}</div>
+        <div style="text-align:right"><span style="color:var(--tx);font-weight:800">${t("tbl")} ${o.tableId}</span><span style="color:var(--tx3);font-size:12px;margin-right:8px"> · ${o.at||""}</span></div>
+      </div>
+      <div style="margin-bottom:10px">${itemsHtml}</div>
+      <div style="display:flex;gap:8px">${actionHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+function setFilter(f){ filter=f; render(); }
+function setSafe(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function toast(msg,ok){
+  var d=document.createElement("div");d.className="toast"+(ok?" ok":"");d.textContent=msg;
+  document.getElementById("toasts").appendChild(d);
+  setTimeout(()=>{if(d.parentNode)d.remove();},3000);
+}
+
+// ══ INIT ══
+setLang(LANG);
+render();
+setInterval(render, 5000); // re-render every 5s for timers
+</script>
+</body>
+</html>
