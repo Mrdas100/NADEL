@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>شاهي قمرا</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Cairo',sans-serif;direction:rtl;background:#0d0800;color:#f0e8cc;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
+.logo{font-size:72px;margin-bottom:8px;filter:drop-shadow(0 0 24px #d4a01770);}
+h1{font-size:36px;font-weight:900;color:#d4a017;margin:0 0 6px;}
+p{color:#a08040;font-size:15px;margin-bottom:48px;}
+.cards{display:flex;flex-direction:column;gap:16px;width:100%;max-width:360px;}
+.card{border-radius:20px;padding:24px 20px;display:flex;align-items:center;gap:16px;text-decoration:none;transition:all .2s;}
+.card-c{background:linear-gradient(135deg,#d4a017,#f5c842);box-shadow:0 6px 24px #d4a01755;}
+.card-s{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);}
+.card-c:active,.card-s:active{transform:scale(.97);}
+.card-ico{font-size:42px;flex-shrink:0;}
+.card-txt{text-align:right;}
+.card-txt h2{font-size:18px;font-weight:800;margin:0 0 4px;}
+.card-txt p{font-size:13px;margin:0;opacity:.8;}
+.card-c .card-txt h2,.card-c .card-txt p{color:#0d0800;}
+.card-s .card-txt h2{color:#f0e8cc;}
+.card-s .card-txt p{color:#a08040;}
+.divider{color:#342010;font-size:12px;margin:4px 0;}
+</style>
+</head>
+<body>
+<div class="logo">🌙</div>
+<h1>شاهي قمرا</h1>
+<p>فطورك وسهرتك عندنا!</p>
+
+<div class="cards">
+  <a href="customer.html" class="card card-c">
+    <div class="card-ico">📱</div>
+    <div class="card-txt">
+      <h2>اطلب الآن</h2>
+      <p>قائمة الطلبات للزبائن</p>
+    </div>
+  </a>
+
+  <div class="divider">— للموظفين —</div>
+
+  <a href="staff.html" class="card card-s">
+    <div class="card-ico">🏪</div>
+    <div class="card-txt">
+      <h2>لوحة المحل</h2>
+      <p>النادل · المطبخ · الإدارة · الإعدادات</p>
+    </div>
+  </a>
+</div>
+</body>
+</html>
