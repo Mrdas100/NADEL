@@ -5,602 +5,844 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>شاهي قمرا — Staff</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Noto+Sans+Bengali:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Noto+Sans+Bengali:wght@400;700;800&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<!-- QR Code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#0d0800;--bg2:#0a0600;--bg3:#070400;--ac:#d4a017;--ac-bg:rgba(212,160,23,.14);--ac-bd:rgba(212,160,23,.3);--tx:#f0e8cc;--tx2:#a08040;--tx3:#5a4020;--tx4:#342010;--card:rgba(255,255,255,.04);--bd:#1e1400;--bd2:#150f00;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Cairo','Noto Sans Bengali',sans-serif;direction:rtl;background:var(--bg);color:var(--tx);min-height:100vh;}
 button{font-family:'Cairo','Noto Sans Bengali',sans-serif;cursor:pointer;border:none;outline:none;}
-input,select{font-family:'Cairo','Noto Sans Bengali',sans-serif;outline:none;}
+input,select,textarea{font-family:'Cairo','Noto Sans Bengali',sans-serif;outline:none;}
 .scr{display:none;flex-direction:column;}.scr.on{display:flex;}
 .fscr{display:none;flex-direction:column;height:100vh;}.fscr.on{display:flex;}
 .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--bd);}
 .hdr{padding:13px 16px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .back{background:rgba(255,255,255,.07);border-radius:8px;color:var(--tx2);padding:6px 12px;font-size:15px;}
-.tabs{display:flex;flex-shrink:0;}
-.tab{flex:1;padding:11px 0;background:none;border:none;border-bottom:2px solid transparent;font-weight:700;font-size:12px;transition:color .15s;}
+.tabs{display:flex;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);}
+.tab{flex:1;padding:11px 0;background:none;border:none;border-bottom:2px solid transparent;font-weight:700;font-size:12px;}
 .badge{border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;}
-.sp{background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid #f59e0b40;}
-.sr{background:rgba(59,130,246,.14);color:#3b82f6;border:1px solid #3b82f640;}
-.sg{background:rgba(16,185,129,.14);color:#10b981;border:1px solid #10b98140;}
-.sd{background:rgba(107,114,128,.12);color:#9ca3af;border:1px solid #9ca3af30;}
-.empty{text-align:center;padding:48px 24px;}
+.bp{background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid #f59e0b40;}
+.br{background:rgba(59,130,246,.14);color:#3b82f6;border:1px solid #3b82f640;}
+.bg{background:rgba(16,185,129,.14);color:#10b981;border:1px solid #10b98140;}
+.bd{background:rgba(107,114,128,.12);color:#9ca3af;border:1px solid #9ca3af30;}
 .chip{border-radius:8px;padding:3px 10px;font-size:12px;}
+.empty{text-align:center;padding:48px 24px;}
 #toast-l{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 .toast{padding:10px 18px;border-radius:10px;font-size:14px;max-width:280px;text-align:right;animation:si .3s ease;}
 @keyframes si{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+.lb{display:flex;gap:6px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.lbtn{padding:5px 12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--tx3);font-size:12px;font-weight:700;}
+.lbtn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
 input[type=range]{-webkit-appearance:none;height:6px;border-radius:3px;cursor:pointer;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--ac);}
-/* LANG SWITCHER */
-.lang-bar{display:flex;gap:6px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0;}
-.lang-btn{flex:1;padding:6px 0;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--tx3);font-size:12px;font-weight:700;}
-.lang-btn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
-/* LTR support for Bengali */
-body.ltr{direction:ltr;text-align:left;}
-body.ltr .hdr{direction:ltr;}
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:var(--bg);}
+.login-card{background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:28px;width:100%;max-width:380px;}
+.linput{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;color:var(--tx);font-size:15px;margin-bottom:12px;direction:ltr;}
+.linput::placeholder{color:var(--tx4);direction:rtl;text-align:right;}
+.linput:focus{border-color:var(--ac-bd);}
+.lbig{width:100%;background:var(--ac);border:none;border-radius:12px;padding:14px 0;color:#fff;font-weight:800;font-size:16px;margin-top:4px;box-shadow:0 4px 18px var(--ac-bg);}
+.lerr{color:#f87171;font-size:13px;text-align:center;margin-top:8px;min-height:20px;}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* MODALS */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:8000;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px);}
+.modal-ov.on{display:flex;}
+.modal-sh{background:var(--bg2);border:1px solid var(--bd);border-radius:24px 24px 0 0;width:100%;max-width:520px;animation:su .28s ease;max-height:90vh;overflow-y:auto;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mpill{width:40px;height:4px;background:var(--bd);border-radius:2px;margin:12px auto 0;}
+.mbody{padding:16px 20px 32px;}
+.mfield{margin-bottom:14px;}
+.mfield label{color:var(--tx2);font-size:12px;font-weight:700;display:block;margin-bottom:5px;}
+.mfield input,.mfield select,.mfield textarea{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:9px 12px;color:var(--tx);font-size:14px;}
+.mfield textarea{resize:none;height:60px;}
+.msave{width:100%;background:var(--ac);border:none;border-radius:12px;padding:13px 0;color:#fff;font-weight:800;font-size:15px;margin-top:8px;}
+.mdel{width:100%;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:11px 0;color:#f87171;font-weight:700;font-size:14px;margin-top:8px;}
+/* MENU CMS */
+.menu-item-row{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.mi-img{width:46px;height:46px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg3);}
+/* QR */
+.qr-wrap{background:#fff;border-radius:12px;padding:16px;display:inline-block;}
+/* RECEIPT PRINT */
+@media print{body *{visibility:hidden}#print-area *{visibility:visible}#print-area{position:fixed;top:0;left:0;width:100%;background:#fff;padding:20px;color:#000;direction:rtl;}}
 </style>
 </head>
 <body>
 <div id="toast-l"></div>
+<div id="print-area" style="display:none"></div>
 
-<!-- HOME -->
-<div id="s-home" class="scr on" style="min-height:100vh;">
-  <!-- lang bar top -->
-  <div style="background:var(--bg2);border-bottom:1px solid var(--bd);padding:10px 16px;display:flex;justify-content:flex-end;align-items:center;gap:8px">
-    <span style="color:var(--tx3);font-size:12px">🌐</span>
-    <button class="lang-btn on" id="lb-ar" onclick="setLang('ar')" style="flex:none;padding:5px 12px">العربية</button>
-    <button class="lang-btn" id="lb-en" onclick="setLang('en')" style="flex:none;padding:5px 12px">English</button>
-    <button class="lang-btn" id="lb-bn" onclick="setLang('bn')" style="flex:none;padding:5px 12px;font-family:'Noto Sans Bengali',sans-serif">বাংলা</button>
+<!-- ══ LOGIN ══ -->
+<div id="s-login" class="scr on">
+  <div class="login-wrap">
+    <div style="font-size:56px;margin-bottom:10px;filter:drop-shadow(0 0 16px var(--ac-bg))">🌙</div>
+    <h1 style="color:var(--ac);font-size:26px;font-weight:900;margin:0 0 4px" id="l-cafe-name">شاهي قمرا</h1>
+    <p style="color:var(--tx2);font-size:13px;margin-bottom:28px">دخول الموظفين</p>
+    <div class="login-card">
+      <div class="lb" style="border-radius:10px;margin-bottom:16px;border:none;padding:0">
+        <button class="lbtn on" id="lb-ar" onclick="setLang('ar')">العربية</button>
+        <button class="lbtn" id="lb-en" onclick="setLang('en')">English</button>
+        <button class="lbtn" id="lb-bn" onclick="setLang('bn')" style="font-family:'Noto Sans Bengali',sans-serif">বাংলা</button>
+      </div>
+      <input id="l-email" class="linput" type="email" placeholder="البريد الإلكتروني">
+      <input id="l-pass" class="linput" type="password" placeholder="كلمة المرور">
+      <button id="l-btn" class="lbig" onclick="doLogin()">🔐 دخول</button>
+      <div id="l-err" class="lerr"></div>
+      <div style="border-top:1px solid var(--bd);margin-top:16px;padding-top:14px;text-align:center">
+        <p style="color:var(--tx3);font-size:12px;margin-bottom:8px">أول مرة؟ أنشئ حساب مدير</p>
+        <button onclick="showReg()" style="background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 16px;color:var(--tx2);font-size:13px">➕ إنشاء حساب</button>
+      </div>
+      <div id="reg-form" style="display:none;margin-top:14px;border-top:1px solid var(--bd);padding-top:14px">
+        <input id="r-name" class="linput" type="text" placeholder="الاسم">
+        <select id="r-role" style="width:100%;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:11px 14px;color:var(--tx);font-size:14px;margin-bottom:12px">
+          <option value="admin">مدير (Admin)</option>
+          <option value="waiter">نادل (Waiter)</option>
+          <option value="kitchen">مطبخ (Kitchen)</option>
+        </select>
+        <button class="lbig" onclick="doRegister()" style="background:#3b82f6">✅ إنشاء الحساب</button>
+      </div>
+    </div>
+    <div id="l-fb-warn" style="margin-top:20px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;max-width:380px;width:100%;display:none">
+      <p style="color:#f59e0b;font-size:12px;font-weight:700;margin-bottom:6px">⚠️ Firebase غير مضبوط</p>
+      <p style="color:var(--tx3);font-size:11px">عدّل FIREBASE_CONFIG في أعلى الملف لتفعيل المزامنة الحية والمصادقة. يعمل الآن بوضع محلي (localStorage).</p>
+      <button onclick="skipLogin()" style="background:var(--ac);border:none;border-radius:8px;padding:8px 16px;color:#fff;font-weight:700;font-size:13px;margin-top:10px">متابعة بدون Firebase →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="s-home" class="scr" style="min-height:100vh;">
+  <div style="background:var(--bg2);border-bottom:1px solid var(--bd);padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div class="lb" style="padding:0;border:none;background:none">
+      <button class="lbtn on" id="hb-ar" onclick="setLang('ar')">العربية</button>
+      <button class="lbtn" id="hb-en" onclick="setLang('en')">English</button>
+      <button class="lbtn" id="hb-bn" onclick="setLang('bn')" style="font-family:'Noto Sans Bengali',sans-serif">বাংলা</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="user-badge" style="color:var(--tx3);font-size:12px"></span>
+      <button onclick="doLogout()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 10px;color:#f87171;font-size:12px">خروج</button>
+    </div>
   </div>
   <div id="home-body" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;"></div>
 </div>
 
-<!-- WAITER -->
+<!-- ══ WAITER ══ -->
 <div id="s-waiter" class="fscr">
   <div class="hdr" id="w-hdr"></div>
-  <div class="lang-bar" id="w-lang"></div>
-  <div class="tabs" id="w-tabs" style="background:var(--bg2);border-bottom:1px solid var(--bd);"></div>
+  <div class="lb" id="w-lb"></div>
+  <div class="tabs" id="w-tabs"></div>
   <div id="w-tc0" style="display:flex;flex-direction:column;flex:1;overflow:hidden;"></div>
   <div id="w-tc1" class="scroll" style="display:none;"></div>
   <div id="w-tc2" class="scroll" style="display:none;padding:14px;"></div>
 </div>
 
-<!-- KITCHEN -->
+<!-- ══ KITCHEN ══ -->
 <div id="s-kitchen" class="fscr">
   <div class="hdr" id="k-hdr"></div>
-  <div class="lang-bar" id="k-lang"></div>
+  <div class="lb" id="k-lb"></div>
   <div id="k-stats" style="display:flex;gap:10px;padding:12px 14px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);"></div>
   <div id="k-filters" style="display:flex;gap:8px;padding:10px 14px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bd);"></div>
   <div class="scroll" id="k-list" style="padding:14px;"></div>
 </div>
 
-<!-- ADMIN -->
+<!-- ══ ADMIN ══ -->
 <div id="s-admin" class="fscr">
   <div class="hdr" id="a-hdr"></div>
-  <div class="lang-bar" id="a-lang"></div>
-  <div class="scroll" id="a-body" style="padding:14px;background:var(--bg);"></div>
+  <div class="lb" id="a-lb"></div>
+  <div class="tabs" id="a-tabs" style="background:var(--bg2);border-bottom:1px solid var(--bd);"></div>
+  <div id="a-v0" class="scroll" style="display:none;padding:14px;"></div>
+  <div id="a-v1" class="scroll" style="display:none;padding:14px;"></div>
+  <div id="a-v2" class="scroll" style="display:none;padding:14px;"></div>
+  <div id="a-v3" class="scroll" style="display:none;padding:14px;"></div>
+  <div id="a-v4" class="scroll" style="display:none;padding:14px;"></div>
 </div>
 
-<!-- SETTINGS -->
-<div id="s-settings" class="fscr">
-  <div class="hdr" id="st-hdr"></div>
-  <div class="lang-bar" id="st-lang"></div>
-  <div class="scroll" id="st-body" style="padding:14px;background:var(--bg);"></div>
+<!-- ══ MENU ITEM MODAL ══ -->
+<div id="mi-ov" class="modal-ov" onclick="if(event.target===this)closeMenuModal()">
+  <div class="modal-sh">
+    <div class="mpill"></div>
+    <div class="mbody">
+      <h3 id="mi-title" style="color:var(--ac);margin-bottom:16px;font-size:16px">إضافة صنف</h3>
+      <input type="hidden" id="mi-id">
+      <div class="mfield"><label>اسم الصنف (عربي)</label><input id="mi-name" type="text" placeholder="مثال: شاهي قمرا"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="mfield"><label>السعر (ريال)</label><input id="mi-price" type="number" placeholder="10"></div>
+        <div class="mfield"><label>الترتيب</label><input id="mi-order" type="number" placeholder="0"></div>
+      </div>
+      <div class="mfield">
+        <label>التصنيف</label>
+        <select id="mi-cat">
+          <option>سمبوسة</option><option>المناقيش</option><option>الحلى</option><option>خلية قمرا</option><option>الفطائر</option><option>المشروبات الساخنة</option><option>المقرمشات</option><option>القهوة</option><option>المشروبات الباردة</option><option>ترامس سفري</option><option>الالعاب وحجز المباريات</option>
+        </select>
+      </div>
+      <div class="mfield"><label>الإيموجي</label><input id="mi-emoji" type="text" placeholder="🍵" style="font-size:22px;text-align:center"></div>
+      <div class="mfield"><label>رابط الصورة (URL)</label><input id="mi-img" type="url" placeholder="https://..."></div>
+      <div class="mfield"><label>خيارات الحجم (اختياري) — مثال: صغير=6,كبير=8</label><input id="mi-vars" type="text" placeholder="صغير=6,كبير=8"></div>
+      <div class="mfield" style="display:flex;justify-content:space-between;align-items:center">
+        <label style="margin:0">مفعّل</label>
+        <input type="checkbox" id="mi-active" checked style="width:20px;height:20px;cursor:pointer">
+      </div>
+      <button class="msave" onclick="saveMenuItem()">💾 حفظ</button>
+      <button class="mdel" id="mi-del-btn" onclick="deleteMenuItem()" style="display:none">🗑️ حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ QR MODAL ══ -->
+<div id="qr-ov" class="modal-ov" onclick="if(event.target===this)closeQR()">
+  <div class="modal-sh">
+    <div class="mpill"></div>
+    <div class="mbody" style="text-align:center">
+      <h3 style="color:var(--ac);margin-bottom:16px" id="qr-title">QR طاولة 1</h3>
+      <div style="display:flex;justify-content:center;margin-bottom:16px"><div id="qr-canvas" class="qr-wrap"></div></div>
+      <p id="qr-url" style="color:var(--tx3);font-size:11px;word-break:break-all;margin-bottom:16px"></p>
+      <button onclick="printQR()" style="background:var(--ac);border:none;border-radius:10px;padding:10px 20px;color:#fff;font-weight:700;margin-left:8px">🖨️ طباعة</button>
+      <button onclick="closeQR()" style="background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 20px;color:var(--tx2);font-weight:700">إغلاق</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// ════════════════════════════════════════════
-// LANGUAGE SYSTEM
-// ════════════════════════════════════════════
-var LANG = localStorage.getItem("qamra_lang") || "ar";
+// ══════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 
-var TRANS = {
-  ar:{
-    home:"الرئيسية",waiter:"شاشة النادل",kitchen:"شاشة المطبخ",admin:"لوحة الإدارة",settings:"الإعدادات",
-    waiter_desc:"إدارة الطلبات والطاولات",kitchen_desc:"استقبال وتحضير الطلبات",admin_desc:"إحصائيات وتقارير",settings_desc:"ثيم · ألوان · طاولات",
-    tables:"الطاولات",new_order:"طلب جديد ➕",active_orders:"نشطة",available:"متاحة",busy_orders:" طلب نشط",choose_table:"اختر طاولة",cart_label:"السلة",send_kitchen:"إرسال للمطبخ",
-    pending:"في الانتظار",preparing:"قيد التحضير",ready:"جاهز ✅",delivered:"تم التسليم",
-    start_prep:"👨‍🍳 بدء التحضير",mark_ready:"✅ جاهز",mark_delivered:"🎉 تم التسليم",
-    total_orders:"إجمالي الطلبات",waiting:"في الانتظار",delivered_count:"تم التسليم",revenue:"الإيرادات",
-    top_items:"🔥 الأكثر طلباً",table_sales:"🪑 مبيعات الطاولات",all_orders:"📋 جميع الطلبات",no_data:"لا يوجد بيانات بعد",
-    display_mode:"🌓 وضع العرض",auto_mode:"تلقائي 📱",dark_mode:"داكن 🌙",light_mode:"فاتح ☀️",
-    current_mode:"الوضع الحالي",accent_color:"🎨 لون التمييز",custom:"مخصص",
-    table_settings:"🪑 إعداد الطاولات",table_count:"عدد الطاولات",table_prefix:"بادئة الاسم",
-    cafe_info:"🏪 معلومات المقهى",cafe_name_lbl:"اسم المقهى",preview:"👁️ معاينة",
-    dark_lbl:"داكن",light_lbl:"فاتح",auto_lbl:"(تلقائي)",tables_label:"طاولات",others:"أخرى",
-    sar:"ريال",waiter_tag:"نادل",customer_tag:"عميل",
-    no_active:"لا طلبات نشطة",all_quiet:"كل شيء هادئ",no_orders:"لا طلبات",waiting_orders:"في انتظار الطلبات",
-    table_lbl:"طاولة",order_num:"طلب",filter_pending:"⏳ انتظار",filter_prep:"👨‍🍳 تحضير",filter_all:"📋 الكل",
-    cat_all:"الكل",cat_samosa:"سمبوسة",cat_mana:"المناقيش",cat_sweets:"الحلى",cat_honey:"خلية قمرا",cat_fatayer:"الفطائر",cat_hot:"المشروبات الساخنة",cat_nuts:"المقرمشات",cat_coffee:"القهوة",cat_cold:"المشروبات الباردة",cat_thermos:"ترامس سفري",cat_games:"الالعاب وحجز المباريات",
-    save_settings:"💾 حفظ"
-  },
-  en:{
-    home:"Home",waiter:"Waiter",kitchen:"Kitchen",admin:"Admin",settings:"Settings",
-    waiter_desc:"Manage orders & tables",kitchen_desc:"Receive & prepare orders",admin_desc:"Statistics & reports",settings_desc:"Theme · Colors · Tables",
-    tables:"Tables",new_order:"New Order ➕",active_orders:"Active",available:"Available",busy_orders:" active",choose_table:"Choose Table",cart_label:"Cart",send_kitchen:"Send to Kitchen",
-    pending:"Pending",preparing:"Preparing",ready:"Ready ✅",delivered:"Delivered",
-    start_prep:"👨‍🍳 Start Preparing",mark_ready:"✅ Ready",mark_delivered:"🎉 Delivered",
-    total_orders:"Total Orders",waiting:"Pending",delivered_count:"Delivered",revenue:"Revenue",
-    top_items:"🔥 Most Ordered",table_sales:"🪑 Table Sales",all_orders:"📋 All Orders",no_data:"No data yet",
-    display_mode:"🌓 Display Mode",auto_mode:"Auto 📱",dark_mode:"Dark 🌙",light_mode:"Light ☀️",
-    current_mode:"Current mode",accent_color:"🎨 Accent Color",custom:"Custom",
-    table_settings:"🪑 Table Settings",table_count:"Table Count",table_prefix:"Name Prefix",
-    cafe_info:"🏪 Café Info",cafe_name_lbl:"Café Name",preview:"👁️ Preview",
-    dark_lbl:"Dark",light_lbl:"Light",auto_lbl:"(Auto)",tables_label:"tables",others:"more",
-    sar:"SAR",waiter_tag:"waiter",customer_tag:"customer",
-    no_active:"No active orders",all_quiet:"All quiet",no_orders:"No orders",waiting_orders:"Waiting for orders",
-    table_lbl:"Table",order_num:"order",filter_pending:"⏳ Pending",filter_prep:"👨‍🍳 Preparing",filter_all:"📋 All",
-    cat_all:"All",cat_samosa:"Samosa",cat_mana:"Manaqeesh",cat_sweets:"Sweets",cat_honey:"Honeycomb",cat_fatayer:"Pies",cat_hot:"Hot Drinks",cat_nuts:"Nuts & Seeds",cat_coffee:"Coffee",cat_cold:"Cold Drinks",cat_thermos:"Thermos",cat_games:"Games & Booking",
-    save_settings:"💾 Save"
-  },
-  bn:{
-    home:"হোম",waiter:"ওয়েটার",kitchen:"রান্নাঘর",admin:"অ্যাডমিন",settings:"সেটিংস",
-    waiter_desc:"অর্ডার ও টেবিল",kitchen_desc:"অর্ডার প্রস্তুত করুন",admin_desc:"পরিসংখ্যান",settings_desc:"থিম · রং · টেবিল",
-    tables:"টেবিল",new_order:"নতুন অর্ডার ➕",active_orders:"সক্রিয়",available:"খালি",busy_orders:" সক্রিয়",choose_table:"টেবিল বেছে নিন",cart_label:"কার্ট",send_kitchen:"রান্নাঘরে পাঠান",
-    pending:"অপেক্ষায়",preparing:"প্রস্তুত হচ্ছে",ready:"প্রস্তুত ✅",delivered:"সরবরাহ হয়েছে",
-    start_prep:"👨‍🍳 শুরু করুন",mark_ready:"✅ প্রস্তুত",mark_delivered:"🎉 সরবরাহ হয়েছে",
-    total_orders:"মোট অর্ডার",waiting:"অপেক্ষায়",delivered_count:"সরবরাহ হয়েছে",revenue:"আয়",
-    top_items:"🔥 সর্বাধিক",table_sales:"🪑 টেবিল বিক্রয়",all_orders:"📋 সব অর্ডার",no_data:"কোনো তথ্য নেই",
-    display_mode:"🌓 ডিসপ্লে মোড",auto_mode:"স্বয়ংক্রিয় 📱",dark_mode:"ডার্ক 🌙",light_mode:"লাইট ☀️",
-    current_mode:"বর্তমান মোড",accent_color:"🎨 রং",custom:"কাস্টম",
-    table_settings:"🪑 টেবিল সেটিংস",table_count:"টেবিল সংখ্যা",table_prefix:"নামের উপসর্গ",
-    cafe_info:"🏪 ক্যাফে তথ্য",cafe_name_lbl:"ক্যাফের নাম",preview:"👁️ পূর্বরূপ",
-    dark_lbl:"ডার্ক",light_lbl:"লাইট",auto_lbl:"(স্বয়ংক্রিয়)",tables_label:"টেবিল",others:"আরো",
-    sar:"রিয়াল",waiter_tag:"ওয়েটার",customer_tag:"গ্রাহক",
-    no_active:"কোনো সক্রিয় অর্ডার নেই",all_quiet:"সব শান্ত",no_orders:"কোনো অর্ডার নেই",waiting_orders:"অর্ডারের অপেক্ষায়",
-    table_lbl:"টেবিল",order_num:"অর্ডার",filter_pending:"⏳ অপেক্ষায়",filter_prep:"👨‍🍳 প্রস্তুত",filter_all:"📋 সব",
-    cat_all:"সব",cat_samosa:"সামোসা",cat_mana:"মানাকিশ",cat_sweets:"মিষ্টি",cat_honey:"হানিকম্ব",cat_fatayer:"পাই",cat_hot:"গরম পানীয়",cat_nuts:"বাদাম",cat_coffee:"কফি",cat_cold:"ঠান্ডা পানীয়",cat_thermos:"থার্মোস",cat_games:"গেমস",
-    save_settings:"💾 সংরক্ষণ"
+var db=null, auth=null, FB_OK=false;
+var currentUser=null, userRole="admin";
+
+(function initFB(){
+  if(FIREBASE_CONFIG.apiKey==="YOUR_API_KEY"){
+    document.getElementById("l-fb-warn").style.display="block";
+    return;
   }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.firestore();
+    auth=firebase.auth();
+    FB_OK=true;
+    auth.onAuthStateChanged(function(user){
+      if(user){currentUser=user; loadUserRole(user.uid);}
+    });
+  }catch(e){document.getElementById("l-fb-warn").style.display="block";}
+})();
+
+async function loadUserRole(uid){
+  if(!db) return;
+  try{
+    var doc=await db.collection("users").doc(uid).get();
+    if(doc.exists){ userRole=doc.data().role||"waiter"; var name=doc.data().name||currentUser.email; setSafe("user-badge","👤 "+name+" ("+userRole+")"); navToRole(); }
+    else{ setSafe("l-err","لم يتم العثور على صلاحيات. تواصل مع المدير."); doLogout(); }
+  }catch(e){ navToRole(); }
+}
+
+function doLogin(){
+  if(!FB_OK){ skipLogin(); return; }
+  var email=document.getElementById("l-email").value.trim();
+  var pass=document.getElementById("l-pass").value;
+  if(!email||!pass){ setSafe("l-err","أدخل البريد وكلمة المرور"); return; }
+  setSafe("l-err","");
+  document.getElementById("l-btn").innerHTML='<span class="spin"></span>جاري الدخول...';
+  auth.signInWithEmailAndPassword(email,pass)
+    .catch(function(e){ document.getElementById("l-btn").textContent="🔐 دخول"; setSafe("l-err",e.code==="auth/wrong-password"?"كلمة المرور خاطئة":e.code==="auth/user-not-found"?"البريد غير مسجل":"خطأ في تسجيل الدخول"); });
+}
+
+function doRegister(){
+  if(!FB_OK){ alert("Firebase غير مضبوط"); return; }
+  var email=document.getElementById("l-email").value.trim();
+  var pass=document.getElementById("l-pass").value;
+  var name=document.getElementById("r-name").value.trim();
+  var role=document.getElementById("r-role").value;
+  if(!email||!pass||!name){ setSafe("l-err","أكمل جميع الحقول"); return; }
+  auth.createUserWithEmailAndPassword(email,pass).then(function(cred){
+    return db.collection("users").doc(cred.user.uid).set({name,role,email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }).catch(function(e){ setSafe("l-err",e.message); });
+}
+
+function showReg(){ document.getElementById("reg-form").style.display=document.getElementById("reg-form").style.display==="none"?"block":"none"; }
+
+function doLogout(){
+  if(auth) auth.signOut();
+  currentUser=null; userRole="admin";
+  nav("s-login"); detachListeners();
+}
+
+function skipLogin(){
+  FB_OK=false; userRole="admin";
+  setSafe("user-badge","⚠️ بدون Firebase");
+  loadS(); applyTheme(); navToRole();
+}
+
+function navToRole(){
+  loadS(); applyTheme();
+  setLangUI();
+  nav("s-home"); buildHome();
+  startListeners();
+}
+
+// ══════════════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════════════
+var LANG = localStorage.getItem("qamra_lang")||"ar";
+var TR = {
+  ar:{home:"الرئيسية",waiter:"شاشة النادل",kitchen:"شاشة المطبخ",admin:"الإدارة",settings:"الإعدادات",waiter_d:"إدارة الطلبات والطاولات",kitchen_d:"استقبال وتحضير الطلبات",admin_d:"إحصائيات وتقارير",tables:"الطاولات",new_order:"طلب جديد ➕",active:"نشطة",available:"متاحة",busy:" طلب",choose_tbl:"اختر طاولة",pending:"في الانتظار",preparing:"قيد التحضير",ready:"جاهز ✅",delivered:"تم التسليم",start_prep:"👨‍🍳 بدء التحضير",mark_ready:"✅ جاهز",mark_del:"🎉 تم التسليم",total_ord:"إجمالي الطلبات",waiting:"في الانتظار",del_cnt:"تم التسليم",revenue:"الإيرادات",top_items:"🔥 الأكثر طلباً",tbl_sales:"🪑 مبيعات الطاولات",all_orders:"📋 جميع الطلبات",no_data:"لا بيانات بعد",f_pending:"⏳ انتظار",f_prep:"👨‍🍳 تحضير",f_all:"📋 الكل",sar:"ريال",no_active:"لا طلبات نشطة",no_orders:"لا طلبات",w_orders:"في انتظار الطلبات",tbl:"طاولة",menu_mgmt:"إدارة القائمة",add_item:"➕ إضافة صنف",qr_tables:"QR الطاولات",reports:"التقارير",settings_t:"الإعدادات",display_mode:"وضع العرض",accent_col:"لون التمييز",tbl_count:"عدد الطاولات",tbl_prefix:"بادئة الاسم",cafe_name:"اسم المقهى",save:"💾 حفظ",waiter_tag:"نادل",customer_tag:"عميل",tax_lbl:"ضريبة (15%)",subtotal:"المجموع",total:"الإجمالي",print:"🖨️ طباعة",close:"إغلاق",generate_qr:"توليد QR"},
+  en:{home:"Home",waiter:"Waiter",kitchen:"Kitchen",admin:"Admin",settings:"Settings",waiter_d:"Manage orders & tables",kitchen_d:"Receive & prepare orders",admin_d:"Statistics & reports",tables:"Tables",new_order:"New Order ➕",active:"Active",available:"Available",busy:" active",choose_tbl:"Choose Table",pending:"Pending",preparing:"Preparing",ready:"Ready ✅",delivered:"Delivered",start_prep:"👨‍🍳 Start Preparing",mark_ready:"✅ Ready",mark_del:"🎉 Delivered",total_ord:"Total Orders",waiting:"Pending",del_cnt:"Delivered",revenue:"Revenue",top_items:"🔥 Most Ordered",tbl_sales:"🪑 Table Sales",all_orders:"📋 All Orders",no_data:"No data yet",f_pending:"⏳ Pending",f_prep:"👨‍🍳 Preparing",f_all:"📋 All",sar:"SAR",no_active:"No active orders",no_orders:"No orders",w_orders:"Waiting for orders",tbl:"Table",menu_mgmt:"Menu Management",add_item:"➕ Add Item",qr_tables:"Table QR Codes",reports:"Reports",settings_t:"Settings",display_mode:"Display Mode",accent_col:"Accent Color",tbl_count:"Table Count",tbl_prefix:"Name Prefix",cafe_name:"Café Name",save:"💾 Save",waiter_tag:"waiter",customer_tag:"customer",tax_lbl:"VAT (15%)",subtotal:"Subtotal",total:"Total",print:"🖨️ Print",close:"Close",generate_qr:"Generate QR"},
+  bn:{home:"হোম",waiter:"ওয়েটার",kitchen:"রান্নাঘর",admin:"অ্যাডমিন",settings:"সেটিংস",waiter_d:"অর্ডার ও টেবিল",kitchen_d:"অর্ডার প্রস্তুত",admin_d:"পরিসংখ্যান",tables:"টেবিল",new_order:"নতুন অর্ডার ➕",active:"সক্রিয়",available:"খালি",busy:" সক্রিয়",choose_tbl:"টেবিল বেছে নিন",pending:"অপেক্ষায়",preparing:"প্রস্তুত হচ্ছে",ready:"প্রস্তুত ✅",delivered:"সরবরাহ হয়েছে",start_prep:"👨‍🍳 শুরু করুন",mark_ready:"✅ প্রস্তুত",mark_del:"🎉 সরবরাহ হয়েছে",total_ord:"মোট অর্ডার",waiting:"অপেক্ষায়",del_cnt:"সরবরাহ হয়েছে",revenue:"আয়",top_items:"🔥 সর্বাধিক",tbl_sales:"🪑 টেবিল বিক্রয়",all_orders:"📋 সব অর্ডার",no_data:"কোনো তথ্য নেই",f_pending:"⏳ অপেক্ষা",f_prep:"👨‍🍳 প্রস্তুত",f_all:"📋 সব",sar:"রিয়াল",no_active:"কোনো সক্রিয় অর্ডার নেই",no_orders:"কোনো অর্ডার নেই",w_orders:"অর্ডারের অপেক্ষায়",tbl:"টেবিল",menu_mgmt:"মেনু ব্যবস্থাপনা",add_item:"➕ যোগ করুন",qr_tables:"টেবিল QR",reports:"রিপোর্ট",settings_t:"সেটিংস",display_mode:"ডিসপ্লে মোড",accent_col:"রং",tbl_count:"টেবিল সংখ্যা",tbl_prefix:"উপসর্গ",cafe_name:"ক্যাফের নাম",save:"💾 সংরক্ষণ",waiter_tag:"ওয়েটার",customer_tag:"গ্রাহক",tax_lbl:"ভ্যাট (১৫%)",subtotal:"সাবটোটাল",total:"মোট",print:"🖨️ প্রিন্ট",close:"বন্ধ করুন",generate_qr:"QR তৈরি করুন"}
+};
+// Product translations
+var IT = {
+  1:{en:"Cheese Samosa (5)",bn:"পনির সামোসা"},2:{en:"Chicken Samosa (5)",bn:"মুরগির সামোসা"},3:{en:"Meat Samosa (5)",bn:"মাংসের সামোসা"},4:{en:"Mixed Samosa (5)",bn:"মিক্স সামোসা"},
+  5:{en:"Meat Manaqeesh",bn:"মাংসের মানাকিশ"},6:{en:"Chicken Manaqeesh",bn:"মুরগির মানাকিশ"},7:{en:"Labneh Honey Mana.",bn:"লাবনেহ মধু"},8:{en:"Mozzarella Mana.",bn:"মোজারেলা"},9:{en:"Tahini Cheese Mana.",bn:"তাহিনি পনির"},10:{en:"Labneh Thyme Mana.",bn:"লাবনেহ থাইম"},
+  11:{en:"Mixed Pancake",bn:"মিক্স প্যানকেক"},12:{en:"Nutella Pancake",bn:"নুটেলা প্যানকেক"},13:{en:"Lotus Pancake",bn:"লোটাস প্যানকেক"},14:{en:"Pistachio Pancake",bn:"পিস্তা প্যানকেক"},
+  15:{en:"Qamra Honeycomb",bn:"কামরা হানিকম্ব"},16:{en:"Meat Pie",bn:"মাংসের পাই"},17:{en:"Mozzarella Pie",bn:"মোজারেলা পাই"},18:{en:"Mixed Cheese Pie",bn:"মিক্স পনির পাই"},
+  19:{en:"Steam Tea",bn:"ভাপ চা"},20:{en:"Qamra Tea",bn:"কামরা চা"},21:{en:"Iraqi Tea",bn:"ইরাকি চা"},22:{en:"Karak Tea",bn:"কারাক চা"},23:{en:"Milk Tea",bn:"দুধ চা"},24:{en:"Taifi Tea",bn:"তায়েফি চা"},25:{en:"Chamomile",bn:"ক্যামোমাইল"},26:{en:"Turkish Coffee",bn:"তুর্কি কফি"},27:{en:"Turkish w/Milk",bn:"দুধ কফি"},28:{en:"V60 Hot",bn:"V60 গরম"},29:{en:"Tea Pot",bn:"চায়ের কেটলি"},
+  30:{en:"Smoked Nuts",bn:"স্মোকড বাদাম"},31:{en:"Plain Nuts",bn:"সাধারণ বাদাম"},32:{en:"Egyptian Seeds",bn:"মিশরীয় বীজ"},33:{en:"Sunflower Seeds",bn:"সূর্যমুখী"},
+  34:{en:"Saudi Coffee Pot",bn:"সৌদি কফি পট"},35:{en:"Hibiscus",bn:"হিবিস্কাস"},36:{en:"Cold Lemon Mint",bn:"লেবু পুদিনা"},37:{en:"V60 Cold",bn:"V60 ঠান্ডা"},38:{en:"Cold Brew",bn:"কোল্ড ব্রু"},
+  39:{en:"Tea Thermos Fill",bn:"চা থার্মোস"},40:{en:"Coffee Thermos Fill",bn:"কফি থার্মোস"},41:{en:"Tea Thermos Sale",bn:"চা থার্মোস"},42:{en:"Coffee Thermos Sale",bn:"কফি থার্মোস"},
+  43:{en:"Baloot Game",bn:"বালুত গেম"},44:{en:"Jackaroo Game",bn:"জাকারু গেম"},45:{en:"Match Booking",bn:"ম্যাচ বুকিং"}
 };
 
-var ITEM_TRANS = {
-  1:{en:"Cheese Samosa (5 pcs)",bn:"পনির সামোসা (৫ পিস)"},
-  2:{en:"Chicken Samosa (5 pcs)",bn:"মুরগির সামোসা (৫ পিস)"},
-  3:{en:"Meat Samosa (5 pcs)",bn:"মাংসের সামোসা (৫ পিস)"},
-  4:{en:"Mixed Samosa (5 pcs)",bn:"মিক্স সামোসা (৫ পিস)"},
-  5:{en:"Meat Manaqeesh",bn:"মাংসের মানাকিশ"},
-  6:{en:"Chicken Manaqeesh",bn:"মুরগির মানাকিশ"},
-  7:{en:"Labneh & Honey Manaqeesh",bn:"লাবনেহ মধু মানাকিশ"},
-  8:{en:"Mozzarella Manaqeesh",bn:"মোজারেলা মানাকিশ"},
-  9:{en:"Tahini & Cheese Manaqeesh",bn:"তাহিনি ও পনির মানাকিশ"},
-  10:{en:"Labneh & Thyme Manaqeesh",bn:"লাবনেহ থাইম মানাকিশ"},
-  11:{en:"Mixed Pancake",bn:"মিক্স প্যানকেক"},
-  12:{en:"Nutella Pancake",bn:"নুটেলা প্যানকেক"},
-  13:{en:"Lotus Pancake",bn:"লোটাস প্যানকেক"},
-  14:{en:"Pistachio Pancake",bn:"পিস্তা প্যানকেক"},
-  15:{en:"Qamra Honeycomb",bn:"কামরা হানিকম্ব"},
-  16:{en:"Meat Pie",bn:"মাংসের পাই"},
-  17:{en:"Mozzarella Pie",bn:"মোজারেলা পাই"},
-  18:{en:"Mixed Cheese Pie",bn:"মিক্স পনির পাই"},
-  19:{en:"Steam Tea",bn:"ভাপ চা"},
-  20:{en:"Qamra Tea",bn:"কামরা চা"},
-  21:{en:"Iraqi Tea",bn:"ইরাকি চা"},
-  22:{en:"Karak Tea",bn:"কারাক চা"},
-  23:{en:"Milk Tea",bn:"দুধ চা"},
-  24:{en:"Taifi Tea",bn:"তায়েফি চা"},
-  25:{en:"Chamomile",bn:"ক্যামোমাইল চা"},
-  26:{en:"Turkish Coffee",bn:"তুর্কি কফি"},
-  27:{en:"Turkish Coffee w/ Milk",bn:"দুধসহ তুর্কি কফি"},
-  28:{en:"V60 Hot Coffee",bn:"V60 গরম কফি"},
-  29:{en:"Tea Pot",bn:"চায়ের কেটলি"},
-  30:{en:"Smoked Nuts",bn:"স্মোকড বাদাম"},
-  31:{en:"Plain Nuts",bn:"সাধারণ বাদাম"},
-  32:{en:"Egyptian Seeds",bn:"মিশরীয় বীজ"},
-  33:{en:"Sunflower Seeds",bn:"সূর্যমুখী বীজ"},
-  34:{en:"Saudi Coffee Pot + Hospitality",bn:"সৌদি কফি পট ও আপ্যায়ন"},
-  35:{en:"Hibiscus",bn:"হিবিস্কাস জুস"},
-  36:{en:"Cold Lemon Mint",bn:"ঠান্ডা লেবু পুদিনা"},
-  37:{en:"V60 Cold Coffee",bn:"V60 ঠান্ডা কফি"},
-  38:{en:"Cold Brew",bn:"কোল্ড ব্রু"},
-  39:{en:"Qamra Tea Thermos Fill",bn:"কামরা চা থার্মোস"},
-  40:{en:"Coffee Thermos Fill",bn:"কফি থার্মোস"},
-  41:{en:"Tea Thermos (Sale)",bn:"চা থার্মোস"},
-  42:{en:"Coffee Thermos (Sale)",bn:"কফি থার্মোস"},
-  43:{en:"Baloot Card Game Table",bn:"বালুত কার্ড গেম"},
-  44:{en:"Jackaroo Board Game",bn:"জাকারু বোর্ড গেম"},
-  45:{en:"Match Table Booking",bn:"ম্যাচ টেবিল বুকিং"}
-};
-
-var AR_CATS = ["الكل","سمبوسة","المناقيش","الحلى","خلية قمرا","الفطائر","المشروبات الساخنة","المقرمشات","القهوة","المشروبات الباردة","ترامس سفري","الالعاب وحجز المباريات"];
-var CAT_KEYS = ["cat_all","cat_samosa","cat_mana","cat_sweets","cat_honey","cat_fatayer","cat_hot","cat_nuts","cat_coffee","cat_cold","cat_thermos","cat_games"];
-
-function t(key) { return (TRANS[LANG]&&TRANS[LANG][key]) || TRANS.ar[key] || key; }
-function iName(item) { if(LANG==="ar"||!item.id) return item.name; return (ITEM_TRANS[item.id]&&ITEM_TRANS[item.id][LANG])||item.name; }
-
-function setLang(lang) {
-  LANG = lang; localStorage.setItem("qamra_lang", lang);
-  ["ar","en","bn"].forEach(function(l){ var el=document.getElementById("lb-"+l); if(el) el.classList.toggle("on",l===lang); });
-  var isRtl = (lang!=="bn");
-  document.documentElement.setAttribute("dir", isRtl?"rtl":"ltr");
-  document.documentElement.setAttribute("lang", lang);
-  document.body.style.direction = isRtl?"rtl":"ltr";
-  rebuildAll();
+function t(k){return(TR[LANG]&&TR[LANG][k])||TR.ar[k]||k;}
+function iName(item){if(LANG==="ar"||!item.id) return item.name; return(IT[item.id]&&IT[item.id][LANG])||item.name;}
+function setLang(lang){LANG=lang;localStorage.setItem("qamra_lang",lang);setLangUI();rebuildAll();}
+function setLangUI(){
+  var isRtl=LANG!=="bn"; document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr"); document.body.style.direction=isRtl?"rtl":"ltr";
+  ["ar","en","bn"].forEach(function(l){["lb","hb"].forEach(function(p){var el=document.getElementById(p+"-"+l);if(el)el.classList.toggle("on",l===LANG);});});
+}
+function lbar(){return'<button class="lbtn'+(LANG==="ar"?" on":"")+'" onclick="setLang(\'ar\')">العربية</button><button class="lbtn'+(LANG==="en"?" on":"")+'" onclick="setLang(\'en\')">English</button><button class="lbtn'+(LANG==="bn"?" on":"")+'" style="font-family:\'Noto Sans Bengali\',sans-serif" onclick="setLang(\'bn\')">বাংলা</button>';}
+function rebuildAll(){
+  var a=document.querySelector(".fscr.on");if(!a){buildHome();return;}
+  if(a.id==="s-waiter"){buildWaiter();}else if(a.id==="s-kitchen"){buildKitchen();}else if(a.id==="s-admin"){buildAdmin();}
+  buildHome();
 }
 
-function langBar(ids) {
-  return ['<button class="lang-btn'+(LANG==="ar"?" on":"")+'" onclick="setLang(\'ar\')">العربية</button>',
-          '<button class="lang-btn'+(LANG==="en"?" on":"")+'" onclick="setLang(\'en\')">English</button>',
-          '<button class="lang-btn'+(LANG==="bn"?" on":"")+'" style="font-family:\'Noto Sans Bengali\',sans-serif" onclick="setLang(\'bn\')">বাংলা</button>'].join("");
-}
-
-function rebuildAll() {
-  var a = document.querySelector(".fscr.on");
-  if (!a) { buildHome(); return; }
-  if(a.id==="s-waiter")   { buildWaiter(); }
-  if(a.id==="s-kitchen")  { buildKitchen(); }
-  if(a.id==="s-admin")    { buildAdmin(); }
-  if(a.id==="s-settings") { buildSettings(); }
-  buildHome(); // update home too (hidden but rebuild for when user goes back)
-}
-
-// ════ SETTINGS & STORAGE ════
-const IMG=h=>`https://media.dodostatic.com/image/r:520x520/${h}.jpg`;
-const MENU=[
-  {id:1,name:"سمبوسة جبن (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c6ffe253b790fbf155c7ef0d51c9c")},
-  {id:2,name:"سمبوسة دجاج (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c7001942f7400948bf6336b281ed4")},
-  {id:3,name:"سمبوسة لحم (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c70081bb77997ae146fdc220b364e")},
-  {id:4,name:"سمبوسة مشكلة (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c986c1fce717c8c51f08858f03909")},
-  {id:5,name:"مناقيش لحم حاشي",price:14,cat:"المناقيش",emoji:"🫓",img:IMG("019c39b1b79c77309d4eaceb83fb56df")},
-  {id:6,name:"مناقيش دجاج",price:13,cat:"المناقيش",emoji:"🫓",img:IMG("019c3f12b88e7919a39eb878f231ca5c")},
-  {id:7,name:"مناقيش لبنة عسل",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c39760ea170d2a9d65ea78c6c494e")},
-  {id:8,name:"مناقيش موزايرلا",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c3fac9bee7269ad515dbac95f522f")},
-  {id:9,name:"مناقيش طحينية وجبن",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c3e6ade577295ab16b237d6b4de36")},
-  {id:10,name:"مناقيش لبنة زعتر",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c39b8f19f7355b0127d5d971a8583")},
-  {id:11,name:"بانكيك مكس",price:18,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb2e3e9731990dfb3d3ae9348d9")},
-  {id:12,name:"بانكيك نوتيلا",price:14,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb2793677b7b6c3d5e287cbf7b9")},
-  {id:13,name:"بانكيك لوتس",price:14,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb39be5720badaf67a04ce11d8b")},
-  {id:14,name:"بانكيك بستاشيو",price:14,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb3482f7771bf5f4e3ad71d9f0a")},
-  {id:15,name:"خلية قمرا",price:13,cat:"خلية قمرا",emoji:"🍯",img:IMG("019c453f58de70d1b947b9308cf1cb7a")},
-  {id:16,name:"فطيرة لحم حاشي",price:11,cat:"الفطائر",emoji:"🥧",img:IMG("019cad3f90a4711c962ef408733a891c")},
-  {id:17,name:"فطيرة موزيرلا",price:8,cat:"الفطائر",emoji:"🥧",img:IMG("019cad4147a17602a96e289a7b17680a")},
-  {id:18,name:"فطيرة مكس اجبان",price:8,cat:"الفطائر",emoji:"🥧",img:IMG("019cad40322e78bc9d906d618cba5acf")},
-  {id:19,name:"شاهي بخار",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c33cb1aae74fe8edc55f523daab28")},
-  {id:20,name:"شاهي قمرا",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c33cadd4676b29f64d6d6b0b09362")},
-  {id:21,name:"شاهي عراقي",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c453fb15f7819b8ec007d24cfeb42")},
-  {id:22,name:"شاهي كرك",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c397b8a7e76c8b5caec633a9453df")},
-  {id:23,name:"شاهي حليب",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c4920d49f79b68fec2a4aad4e4622")},
-  {id:24,name:"شاهي طائفي",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c33ce42f5762693001cfd4ad15706")},
-  {id:25,name:"بابونج",price:6,cat:"المشروبات الساخنة",emoji:"🌼",img:IMG("019c455b0e0e782a84e775695fed28a1")},
-  {id:26,name:"قهوة تركي",price:6,cat:"المشروبات الساخنة",emoji:"☕",img:IMG("019c453dbc54708db2daba6b6cd7d726")},
-  {id:27,name:"قهوة تركي بالحليب",price:8,cat:"المشروبات الساخنة",emoji:"☕",img:IMG("019c453e0e0f7235bf18b656695a6a47")},
-  {id:28,name:"قهوة V60 حار",price:14,cat:"المشروبات الساخنة",emoji:"☕",img:IMG("019c53c966b6701b93e52a108b020e3e")},
-  {id:29,name:"ابريق الشاهي",price:13,cat:"المشروبات الساخنة",emoji:"🫖",img:IMG("019c3fbde01975dd8c0c7ed1498e9706")},
-  {id:30,name:"مكسرات مدخن",price:8,cat:"المقرمشات",emoji:"🥜",img:IMG("019c3f63a56e758f951fcf20829de936")},
-  {id:31,name:"مكسرات عاديه",price:8,cat:"المقرمشات",emoji:"🥜",img:IMG("019c3e7d33be72c1bd38e6f37c5f4f32")},
-  {id:32,name:"حب ابيض مصري",price:4,cat:"المقرمشات",emoji:"🌾",img:IMG("019c3e8e9c3473f2a07a0e73f2d84685")},
-  {id:33,name:"دوار الشمس",price:4,cat:"المقرمشات",emoji:"🌻",img:IMG("019c3f82b2c873f99a12409248e7f071")},
-  {id:34,name:"دلة قهوة سعودية مع ضيافة",price:27,cat:"القهوة",emoji:"🫖",img:IMG("019c4928dd7d74a190c1afed3cdc4867")},
-  {id:35,name:"كركدية",price:12,cat:"المشروبات الباردة",emoji:"🌺",img:IMG("019c453ec7ae745ca8cf8b79c0a3329a")},
-  {id:36,name:"ليمون نعناع بارد",price:12,cat:"المشروبات الباردة",emoji:"🍋",img:IMG("019c455017ac749ab37e8f845f36a527")},
-  {id:37,name:"قهوة V60 بارد",price:14,cat:"المشروبات الباردة",emoji:"🧊",img:IMG("019c53c203ea73d181d96107d3455441")},
-  {id:38,name:"كولد برو",price:18,cat:"المشروبات الباردة",emoji:"🧊",img:IMG("019ce4c2464b7104b83f4202563e8d56")},
-  {id:39,name:"تعبئة شاهي قمرا",price:18,cat:"ترامس سفري",emoji:"🚀",img:IMG("019bf2b7f77f7957b9b1cc719bffcc9a")},
-  {id:40,name:"تعبئة ترمس قهوة",price:25,cat:"ترامس سفري",emoji:"🚀",img:IMG("019bf2b8a2e4756c93c7d205bc372418")},
-  {id:41,name:"بيع ترمس شاهي",price:39,cat:"ترامس سفري",emoji:"🧳",img:IMG("019bf2bf6fdf784684276aae0ccd3938")},
-  {id:42,name:"بيع ترمس قهوة",price:49,cat:"ترامس سفري",emoji:"🧳",img:IMG("019c455fcca37535ade61b5a2a79448e")},
-  {id:43,name:"طاولة بلوت",price:15,cat:"الالعاب وحجز المباريات",emoji:"🃏",img:IMG("019c4a0473eb72bc85c848fc065a264f")},
-  {id:44,name:"جاكارو",price:10,cat:"الالعاب وحجز المباريات",emoji:"🎲",img:IMG("019c4a0b252279b5a02acce909c2b93f")},
-  {id:45,name:"حجز طاولة للمباريات",price:50,cat:"الالعاب وحجز المباريات",emoji:"⚽",img:IMG("019c4a190e37710291ab150eb3daa994")},
-];
-
-const gs=()=>{try{return JSON.parse(localStorage.getItem("qamra_settings")||"{}")}catch(e){return{}}};
-const ss=s=>localStorage.setItem("qamra_settings",JSON.stringify({...gs(),...s}));
-const go_=()=>{try{return JSON.parse(localStorage.getItem("qamra_orders")||"[]")}catch(e){return[]}};
-const so=o=>localStorage.setItem("qamra_orders",JSON.stringify(o));
+// ══════════════════════════════════════════════
+// SETTINGS + THEME
+// ══════════════════════════════════════════════
 var S={tc:10,tp:"طاولة",cn:"شاهي قمرا",ac:"#d4a017",mode:"auto"};
-function loadS(){const s=gs();S.tc=s.tableCount||10;S.tp=s.tablePrefix||"طاولة";S.cn=s.cafeName||"شاهي قمرا";S.ac=s.accent||"#d4a017";S.mode=s.themeMode||"auto";}
+function lSettings(){try{return JSON.parse(localStorage.getItem("qamra_settings")||"{}");}catch(e){return{};}}
+function sSettings(v){localStorage.setItem("qamra_settings",JSON.stringify(v));}
+function loadS(){var s=lSettings();S.tc=s.tableCount||10;S.tp=s.tablePrefix||"طاولة";S.cn=s.cafeName||"شاهي قمرا";S.ac=s.accent||"#d4a017";S.mode=s.themeMode||"auto";}
 const isDark=()=>{if(S.mode==="dark")return true;if(S.mode==="light")return false;return window.matchMedia("(prefers-color-scheme: dark)").matches;};
 function T(){const d=isDark(),ac=S.ac;
-  return d?{bg:"#0d0800",bgH:"#0a0600",sf:"rgba(255,255,255,.035)",sfH:"rgba(255,255,255,.07)",bd:"#1e1400",bds:"#150f00",tx:"#f0e8cc",txS:"#a08040",txM:"#5a4020",txF:"#342010",ac,acBg:`${ac}1a`,acBd:`${ac}38`,dark:1}
-  :{bg:"#fef9ef",bgH:"#fdf3d8",sf:"rgba(0,0,0,.028)",sfH:"rgba(0,0,0,.056)",bd:"#e2ce96",bds:"#ecdda8",tx:"#1a0800",txS:"#6b4c18",txM:"#9a7a38",txF:"#c4a860",ac,acBg:`${ac}1a`,acBd:`${ac}40`,dark:0};}
-function applyTheme(){const t=T();document.body.style.background=t.bg;document.body.style.color=t.tx;
-  const r=document.documentElement.style;
-  r.setProperty("--bg",t.bg);r.setProperty("--bg2",t.bgH);r.setProperty("--ac",t.ac);r.setProperty("--tx",t.tx);r.setProperty("--tx2",t.txS);r.setProperty("--tx3",t.txM);r.setProperty("--tx4",t.txF);r.setProperty("--card",t.sf);r.setProperty("--bd",t.bd);
-  const rgb=hexRgb(t.ac);r.setProperty("--ac-bg",`rgba(${rgb},0.14)`);r.setProperty("--ac-bd",`rgba(${rgb},0.32)`);}
-function hexRgb(h){h=h.replace("#","");if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];return parseInt(h.substr(0,2),16)+","+parseInt(h.substr(2,2),16)+","+parseInt(h.substr(4,2),16);}
+  return d?{bg:"#0d0800",bgH:"#0a0600",sf:"rgba(255,255,255,.04)",sfH:"rgba(255,255,255,.07)",bd:"#1e1400",bds:"#150f00",tx:"#f0e8cc",txS:"#a08040",txM:"#5a4020",txF:"#342010",ac,acBg:`${ac}1a`,acBd:`${ac}38`,dark:1}
+    :{bg:"#fef9ef",bgH:"#fdf3d8",sf:"rgba(0,0,0,.03)",sfH:"rgba(0,0,0,.06)",bd:"#e2ce96",bds:"#ecdda8",tx:"#1a0800",txS:"#6b4c18",txM:"#9a7a38",txF:"#c4a860",ac,acBg:`${ac}1a`,acBd:`${ac}40`,dark:0};}
+function h2rgb(h){h=h.replace("#","");if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];return parseInt(h.substr(0,2),16)+","+parseInt(h.substr(2,2),16)+","+parseInt(h.substr(4,6),16);}
+function applyTheme(){const t=T();document.body.style.background=t.bg;document.body.style.color=t.tx;const r=document.documentElement.style;r.setProperty("--bg",t.bg);r.setProperty("--bg2",t.bgH);r.setProperty("--ac",t.ac);r.setProperty("--tx",t.tx);r.setProperty("--tx2",t.txS);r.setProperty("--tx3",t.txM);r.setProperty("--tx4",t.txF);r.setProperty("--card",t.sf);r.setProperty("--bd",t.bd);const rgb=h2rgb(t.ac);r.setProperty("--ac-bg",`rgba(${rgb},0.14)`);r.setProperty("--ac-bd",`rgba(${rgb},0.32)`);}
 
-function nav(id){
-  document.querySelectorAll(".scr,.fscr").forEach(s=>{s.classList.remove("on");s.style.display="none";});
-  const el=document.getElementById(id);if(el){el.classList.add("on");el.style.display="flex";}
+// ══════════════════════════════════════════════
+// MENU DATA
+// ══════════════════════════════════════════════
+function IMG(h){return'https://media.dodostatic.com/image/r:520x520/'+h+'.jpg';}
+var MENU=[
+  {id:1,name:"سمبوسة جبن (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c6ffe253b790fbf155c7ef0d51c9c"),active:true},
+  {id:2,name:"سمبوسة دجاج (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c7001942f7400948bf6336b281ed4"),active:true},
+  {id:3,name:"سمبوسة لحم (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c70081bb77997ae146fdc220b364e"),active:true},
+  {id:4,name:"سمبوسة مشكلة (5 حبات)",price:9,cat:"سمبوسة",emoji:"🥟",img:IMG("019c986c1fce717c8c51f08858f03909"),active:true},
+  {id:5,name:"مناقيش لحم حاشي",price:14,cat:"المناقيش",emoji:"🫓",img:IMG("019c39b1b79c77309d4eaceb83fb56df"),active:true},
+  {id:6,name:"مناقيش دجاج",price:13,cat:"المناقيش",emoji:"🫓",img:IMG("019c3f12b88e7919a39eb878f231ca5c"),active:true},
+  {id:7,name:"مناقيش لبنة عسل",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c39760ea170d2a9d65ea78c6c494e"),active:true},
+  {id:8,name:"مناقيش موزايرلا",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c3fac9bee7269ad515dbac95f522f"),active:true},
+  {id:9,name:"مناقيش طحينية وجبن",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c3e6ade577295ab16b237d6b4de36"),active:true},
+  {id:10,name:"مناقيش لبنة زعتر",price:11,cat:"المناقيش",emoji:"🫓",img:IMG("019c39b8f19f7355b0127d5d971a8583"),active:true},
+  {id:11,name:"بانكيك مكس",price:18,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb2e3e9731990dfb3d3ae9348d9"),active:true},
+  {id:12,name:"بانكيك نوتيلا",price:14,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb2793677b7b6c3d5e287cbf7b9"),active:true},
+  {id:13,name:"بانكيك لوتس",price:14,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb39be5720badaf67a04ce11d8b"),active:true},
+  {id:14,name:"بانكيك بستاشيو",price:14,cat:"الحلى",emoji:"🥞",img:IMG("019c3eb3482f7771bf5f4e3ad71d9f0a"),active:true},
+  {id:15,name:"خلية قمرا",price:13,cat:"خلية قمرا",emoji:"🍯",img:IMG("019c453f58de70d1b947b9308cf1cb7a"),active:true,variants:[{n:"صغيرة",p:13},{n:"وسط",p:18},{n:"كبيرة",p:25}]},
+  {id:16,name:"فطيرة لحم حاشي",price:11,cat:"الفطائر",emoji:"🥧",img:IMG("019cad3f90a4711c962ef408733a891c"),active:true},
+  {id:17,name:"فطيرة موزيرلا",price:8,cat:"الفطائر",emoji:"🥧",img:IMG("019cad4147a17602a96e289a7b17680a"),active:true},
+  {id:18,name:"فطيرة مكس اجبان",price:8,cat:"الفطائر",emoji:"🥧",img:IMG("019cad40322e78bc9d906d618cba5acf"),active:true},
+  {id:19,name:"شاهي بخار",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c33cb1aae74fe8edc55f523daab28"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:20,name:"شاهي قمرا",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c33cadd4676b29f64d6d6b0b09362"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:21,name:"شاهي عراقي",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c453fb15f7819b8ec007d24cfeb42"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:22,name:"شاهي كرك",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c397b8a7e76c8b5caec633a9453df"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:23,name:"شاهي حليب",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c4920d49f79b68fec2a4aad4e4622"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:24,name:"شاهي طائفي",price:6,cat:"المشروبات الساخنة",emoji:"🍵",img:IMG("019c33ce42f5762693001cfd4ad15706"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:25,name:"بابونج",price:6,cat:"المشروبات الساخنة",emoji:"🌼",img:IMG("019c455b0e0e782a84e775695fed28a1"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:26,name:"قهوة تركي",price:6,cat:"المشروبات الساخنة",emoji:"☕",img:IMG("019c453dbc54708db2daba6b6cd7d726"),active:true,variants:[{n:"صغير",p:6},{n:"كبير",p:8}]},
+  {id:27,name:"قهوة تركي بالحليب",price:8,cat:"المشروبات الساخنة",emoji:"☕",img:IMG("019c453e0e0f7235bf18b656695a6a47"),active:true,variants:[{n:"صغير",p:8},{n:"كبير",p:10}]},
+  {id:28,name:"قهوة V60 حار",price:14,cat:"المشروبات الساخنة",emoji:"☕",img:IMG("019c53c966b6701b93e52a108b020e3e"),active:true},
+  {id:29,name:"ابريق الشاهي",price:13,cat:"المشروبات الساخنة",emoji:"🫖",img:IMG("019c3fbde01975dd8c0c7ed1498e9706"),active:true,variants:[{n:"صغير",p:13},{n:"وسط",p:18},{n:"كبير",p:25}]},
+  {id:30,name:"مكسرات مدخن",price:8,cat:"المقرمشات",emoji:"🥜",img:IMG("019c3f63a56e758f951fcf20829de936"),active:true},
+  {id:31,name:"مكسرات عاديه",price:8,cat:"المقرمشات",emoji:"🥜",img:IMG("019c3e7d33be72c1bd38e6f37c5f4f32"),active:true},
+  {id:32,name:"حب ابيض مصري",price:4,cat:"المقرمشات",emoji:"🌾",img:IMG("019c3e8e9c3473f2a07a0e73f2d84685"),active:true},
+  {id:33,name:"دوار الشمس",price:4,cat:"المقرمشات",emoji:"🌻",img:IMG("019c3f82b2c873f99a12409248e7f071"),active:true},
+  {id:34,name:"دلة قهوة سعودية مع ضيافة",price:27,cat:"القهوة",emoji:"🫖",img:IMG("019c4928dd7d74a190c1afed3cdc4867"),active:true},
+  {id:35,name:"كركدية",price:12,cat:"المشروبات الباردة",emoji:"🌺",img:IMG("019c453ec7ae745ca8cf8b79c0a3329a"),active:true,variants:[{n:"صغير",p:12},{n:"كبير",p:15}]},
+  {id:36,name:"ليمون نعناع بارد",price:12,cat:"المشروبات الباردة",emoji:"🍋",img:IMG("019c455017ac749ab37e8f845f36a527"),active:true,variants:[{n:"صغير",p:12},{n:"كبير",p:15}]},
+  {id:37,name:"قهوة V60 بارد",price:14,cat:"المشروبات الباردة",emoji:"🧊",img:IMG("019c53c203ea73d181d96107d3455441"),active:true},
+  {id:38,name:"كولد برو",price:18,cat:"المشروبات الباردة",emoji:"🧊",img:IMG("019ce4c2464b7104b83f4202563e8d56"),active:true,variants:[{n:"صغير",p:18},{n:"كبير",p:22}]},
+  {id:39,name:"تعبئة شاهي قمرا",price:18,cat:"ترامس سفري",emoji:"🚀",img:IMG("019bf2b7f77f7957b9b1cc719bffcc9a"),active:true},
+  {id:40,name:"تعبئة ترمس قهوة",price:25,cat:"ترامس سفري",emoji:"🚀",img:IMG("019bf2b8a2e4756c93c7d205bc372418"),active:true},
+  {id:41,name:"بيع ترمس شاهي",price:39,cat:"ترامس سفري",emoji:"🧳",img:IMG("019bf2bf6fdf784684276aae0ccd3938"),active:true},
+  {id:42,name:"بيع ترمس قهوة",price:49,cat:"ترامس سفري",emoji:"🧳",img:IMG("019c455fcca37535ade61b5a2a79448e"),active:true},
+  {id:43,name:"طاولة بلوت",price:15,cat:"الالعاب وحجز المباريات",emoji:"🃏",img:IMG("019c4a0473eb72bc85c848fc065a264f"),active:true},
+  {id:44,name:"جاكارو",price:10,cat:"الالعاب وحجز المباريات",emoji:"🎲",img:IMG("019c4a0b252279b5a02acce909c2b93f"),active:true},
+  {id:45,name:"حجز طاولة للمباريات",price:50,cat:"الالعاب وحجز المباريات",emoji:"⚽",img:IMG("019c4a190e37710291ab150eb3daa994"),active:true}
+];
+var CATS=["الكل","سمبوسة","المناقيش","الحلى","خلية قمرا","الفطائر","المشروبات الساخنة","المقرمشات","القهوة","المشروبات الباردة","ترامس سفري","الالعاب وحجز المباريات"];
+
+// ══════════════════════════════════════════════
+// ORDERS
+// ══════════════════════════════════════════════
+var orders=[];
+var orderListener=null;
+
+function startListeners(){
+  detachListeners();
+  if(FB_OK&&db){
+    orderListener=db.collection("orders").orderBy("createdAt","desc").limit(200).onSnapshot(function(snap){
+      orders=[];snap.forEach(function(doc){orders.push({...doc.data(),fbId:doc.id,id:doc.id});});
+      refreshScreens();playBeepIfNew(snap);
+    });
+  } else {
+    // localStorage fallback — poll every 3s
+    loadLocalOrders();
+    window._pollTimer=setInterval(function(){loadLocalOrders();refreshScreens();},3000);
+  }
 }
-function toast(m,ok){
-  const t2=T();const d=document.createElement("div");d.className="toast";d.textContent=m;
-  d.style.background=ok?(t2.dark?"#064e3b":"#d1fae5"):(t2.dark?"#1c1200":"#fffbeb");
-  d.style.border=`1px solid ${ok?"#10b981":t2.ac}`;d.style.color=ok?(t2.dark?"#6ee7b7":"#065f46"):(t2.dark?t2.ac:t2.ac);
-  d.style.boxShadow=t2.dark?"0 4px 20px rgba(0,0,0,.5)":"0 4px 16px rgba(0,0,0,.1)";
-  document.getElementById("toast-l").appendChild(d);setTimeout(()=>d.remove(),3500);}
+function detachListeners(){
+  if(orderListener){orderListener();orderListener=null;}
+  if(window._pollTimer){clearInterval(window._pollTimer);}
+}
+function loadLocalOrders(){
+  try{orders=JSON.parse(localStorage.getItem("qamra_orders")||"[]");}catch(e){orders=[];}
+}
 
-const BDG={
-  pending:`<span class="badge sp"></span>`,
-  preparing:`<span class="badge sr"></span>`,
-  ready:`<span class="badge sg"></span>`,
-  delivered:`<span class="badge sd"></span>`
-};
-function bdg(status){
-  const map={pending:["sp",()=>t("pending")],preparing:["sr",()=>t("preparing")],ready:["sg",()=>t("ready")],delivered:["sd",()=>t("delivered")]};
-  const [cls,lbl]=map[status]||map.pending;
-  return `<span class="badge ${cls}">${lbl()}</span>`;
+var lastCount=0;
+function playBeepIfNew(snap){
+  var n=orders.filter(function(o){return o.status==="pending";}).length;
+  if(n>lastCount){playBeep();} lastCount=n;
+}
+
+function refreshScreens(){
+  var a=document.querySelector(".fscr.on");
+  if(!a)return;
+  if(a.id==="s-waiter"&&wTab===2)renderWActive();
+  if(a.id==="s-kitchen")renderKitchen();
+  // update counts
+  var wa=document.querySelectorAll("#w-tabs button");
+  if(wa.length>2){wa[2].textContent=t("active")+" ("+orders.filter(function(o){return o.status!=="delivered";}).length+")";}
 }
 
 function updOrd(id,status){
-  const orders=go_();const idx=orders.findIndex(o=>o.id===id);
-  if(idx>=0){orders[idx].status=status;so(orders);}
-  toast(t(status==="preparing"?"preparing":status==="ready"?"ready":"delivered"),status==="delivered");
+  if(FB_OK&&db){
+    db.collection("orders").doc(id).update({status:status}).catch(function(e){console.error(e);});
+  } else {
+    var idx=orders.findIndex(function(o){return o.id==id;});
+    if(idx>=0){orders[idx].status=status; localStorage.setItem("qamra_orders",JSON.stringify(orders));}
+    refreshScreens();
+  }
+  const lb={preparing:t("preparing"),ready:t("ready"),delivered:t("delivered")};
+  toast(lb[status]||status,status==="delivered");
 }
+
 function placeOrder(tid,items,by){
-  const orders=go_();
-  orders.unshift({id:Date.now(),tableId:tid,items,status:"pending",by,
-    at:new Date().toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}),
-    total:items.reduce((s,i)=>s+i.price*i.qty,0)});
-  so(orders);toast(t("send_kitchen")+" ✅",true);}
+  const total=items.reduce(function(s,i){return s+i.price*i.qty;},0);
+  const at=new Date().toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"});
+  if(FB_OK&&db){
+    db.collection("orders").add({tableId:tid,items,status:"pending",by,at,total,createdAt:firebase.firestore.FieldValue.serverTimestamp()})
+      .then(function(){toast(t("send_kitchen")+" ✅",true);}).catch(function(e){toast("خطأ: "+e.message,false);});
+  } else {
+    const o={id:Date.now(),tableId:tid,items,status:"pending",by,at,total};
+    orders.unshift(o); localStorage.setItem("qamra_orders",JSON.stringify(orders));
+    toast(t("send_kitchen")+" ✅",true); refreshScreens();
+  }
+}
 
-function oCard(o,t2,showAct){
-  const bc={pending:"#f59e0b",preparing:"#3b82f6",ready:"#10b981",delivered:"#6b7280"};
-  const actBtn=showAct&&o.status==="ready"?`<button onclick="updOrd(${o.id},'delivered');renderWActive()" style="background:#4a1942;border:none;border-radius:10px;padding:8px 16px;color:#e879f9;font-weight:700;font-size:13px">${t("mark_delivered")}</button>`:"";
-  const itemsHtml=o.items.map(i=>{
-    const n=iName(i);
-    const sz=i.sizeName?` (${i.sizeName})`:"";
-    const note=i.note?`<span style="color:${t2.txM};font-size:11px"> 📝${i.note}</span>`:"";
-    return `<div style="margin-bottom:3px"><span class="chip" style="background:${t2.acBg};border:1px solid ${t2.acBd};color:${t2.txS}">${i.emoji} ${n}${sz} ×${i.qty}</span>${note}</div>`;
-  }).join("");
-  return `<div style="background:${t2.sf};border:1px solid ${(bc[o.status]||"#f59e0b")}28;border-radius:14px;padding:14px;margin-bottom:10px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      ${bdg(o.status)}
-      <div style="text-align:right"><span style="color:${t2.tx};font-weight:700">${t("table_lbl")} ${o.tableId}</span><span style="color:${t2.txM};font-size:12px;margin-right:8px">#${String(o.id).slice(-4)}·${o.at}</span></div>
-    </div>
-    <div style="margin-bottom:10px">${itemsHtml}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <span style="color:${t2.ac};font-weight:800;font-size:16px">${o.total} ${t("sar")}</span>${actBtn}
-    </div>
-  </div>`;}
+// ══════════════════════════════════════════════
+// SOUND
+// ══════════════════════════════════════════════
+function playBeep(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,200,400].forEach(function(delay){
+      var o=ctx.createOscillator(); var g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=880; o.type="sine";
+      g.gain.setValueAtTime(0,ctx.currentTime+delay/1000);
+      g.gain.linearRampToValueAtTime(0.25,ctx.currentTime+delay/1000+0.05);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay/1000+0.25);
+      o.start(ctx.currentTime+delay/1000); o.stop(ctx.currentTime+delay/1000+0.3);
+    });
+  }catch(e){}
+}
 
-// ════ HOME ════
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+function setSafe(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function nav(id){document.querySelectorAll(".scr,.fscr").forEach(function(s){s.classList.remove("on");s.style.display="none";});var el=document.getElementById(id);if(el){el.classList.add("on");el.style.display="flex";}}
+function toast(m,ok){
+  var t2=T(); var d=document.createElement("div"); d.className="toast"; d.textContent=m;
+  d.style.background=ok?(t2.dark?"#064e3b":"#d1fae5"):(t2.dark?"#1c1200":"#fffbeb");
+  d.style.border="1px solid "+(ok?"#10b981":t2.ac); d.style.color=ok?(t2.dark?"#6ee7b7":"#065f46"):(t2.dark?t2.ac:t2.ac);
+  d.style.boxShadow=t2.dark?"0 4px 20px rgba(0,0,0,.5)":"0 4px 16px rgba(0,0,0,.1)";
+  document.getElementById("toast-l").appendChild(d); setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},3500);
+}
+
+// ══════════════════════════════════════════════
+// STATUS BADGE
+// ══════════════════════════════════════════════
+function bdg(status){var m={pending:["bp",()=>t("pending")],preparing:["br",()=>t("preparing")],ready:["bg",()=>t("ready")],delivered:["bd",()=>t("delivered")]};var[cls,lbl]=m[status]||m.pending;return'<span class="badge '+cls+'">'+lbl()+'</span>';}
+
+// ══════════════════════════════════════════════
+// ORDER CARD
+// ══════════════════════════════════════════════
+function oCard(o,t2,showAct,isKitchen){
+  var bc={pending:"#f59e0b",preparing:"#3b82f6",ready:"#10b981",delivered:"#6b7280"};
+  var actBtn="";
+  if(showAct){
+    if(o.status==="ready") actBtn='<button onclick="updOrd(\''+o.id+'\',\'delivered\');renderWActive()" style="background:#4a1942;border:none;border-radius:10px;padding:8px 16px;color:#e879f9;font-weight:700;font-size:13px">'+t("mark_del")+'</button>';
+    else if(isKitchen&&o.status==="pending") actBtn='<button onclick="updOrd(\''+o.id+'\',\'preparing\');renderKitchen()" style="background:#1e3a8a;border:none;border-radius:10px;padding:8px 16px;color:#93c5fd;font-weight:700;font-size:13px">'+t("start_prep")+'</button>';
+    else if(isKitchen&&o.status==="preparing") actBtn='<button onclick="updOrd(\''+o.id+'\',\'ready\');renderKitchen()" style="background:#064e3b;border:none;border-radius:10px;padding:8px 16px;color:#6ee7b7;font-weight:700;font-size:13px">'+t("mark_ready")+'</button>';
+    else if(isKitchen&&o.status==="ready") actBtn='<button onclick="updOrd(\''+o.id+'\',\'delivered\');renderKitchen()" style="background:#4a1942;border:none;border-radius:10px;padding:8px 16px;color:#e879f9;font-weight:700;font-size:13px">'+t("mark_del")+'</button>';
+  }
+  var items=o.items.map(function(i){
+    var n=iName(i); var sz=i.sizeName?" ("+i.sizeName+")":""; var nt=i.note?'<span style="color:'+t2.txM+';font-size:11px"> 📝'+i.note+'</span>':"";
+    var trans=LANG!=="ar"&&IT[i.id]?'<span style="color:'+t2.txM+';font-size:10px"> ('+i.name+')</span>':"";
+    return'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="color:'+t2.txS+';font-size:13px">'+i.emoji+' '+n+sz+trans+nt+'</span><span style="background:'+t2.acBg+';color:'+t2.ac+';border-radius:8px;padding:2px 10px;font-weight:700;font-size:13px">×'+i.qty+'</span></div>';}).join("");
+  var rptBtn='<button onclick="showReceipt(orders.find(function(x){return x.id===\''+o.id+'\'}))" style="background:'+t2.acBg+';border:1px solid '+t2.acBd+';border-radius:8px;padding:5px 10px;color:'+t2.ac+';font-weight:700;font-size:12px">🧾</button>';
+  return'<div style="background:'+t2.sf+';border:1px solid '+(bc[o.status]||"#f59e0b")+'28;border-radius:14px;padding:14px;margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+bdg(o.status)
+    +'<div><span style="color:'+t2.tx+';font-weight:800">'+t("tbl")+' '+o.tableId+'</span><span style="color:'+t2.txM+';font-size:12px;margin-right:8px">#'+String(o.id).slice(-4)+'·'+o.at+'</span></div></div>'
+    +'<div style="margin-bottom:10px">'+items+'</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center">'
+    +'<span style="color:'+t2.ac+';font-weight:800;font-size:16px">'+o.total+' '+t("sar")+'</span>'
+    +'<div style="display:flex;gap:6px">'+rptBtn+(actBtn?actBtn:"")+'</div>'
+    +'</div></div>';
+}
+
+// ══════════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════════
 function buildHome(){
-  const t2=T();
-  const roles=[
-    {id:"waiter",  e:"👨‍🍳",lk:"waiter", dk:"waiter_desc", c:"#3b82f6"},
-    {id:"kitchen", e:"🍳",  lk:"kitchen",dk:"kitchen_desc",c:"#10b981"},
-    {id:"admin",   e:"📊",  lk:"admin",  dk:"admin_desc",  c:"#8b5cf6"},
-    {id:"settings",e:"⚙️",  lk:"settings",dk:"settings_desc",c:"#6b7280"},
+  var t2=T();
+  var rs=[
+    {id:"waiter",  e:"👨‍🍳",lk:"waiter",  dk:"waiter_d",  c:"#3b82f6"},
+    {id:"kitchen", e:"🍳",  lk:"kitchen", dk:"kitchen_d", c:"#10b981"},
+    {id:"admin",   e:"📊",  lk:"admin",   dk:"admin_d",   c:"#8b5cf6"},
   ];
-  document.getElementById("home-body").innerHTML=`
-    <div style="font-size:58px;margin-bottom:8px;filter:drop-shadow(0 0 18px ${t2.ac}60)">🌙</div>
-    <h1 style="font-size:30px;font-weight:900;color:${t2.ac};margin:0 0 4px">${S.cn}</h1>
-    <p style="color:${t2.txS};font-size:13px;margin-bottom:32px">${t("admin_desc")}</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">
-      ${roles.map(r=>`<button onclick="openRole('${r.id}')" style="background:${r.c}15;border:1px solid ${r.c}35;border-radius:16px;padding:18px 14px;text-align:right;display:flex;flex-direction:column;gap:7px;transition:all .18s" onmouseenter="this.style.background='${r.c}25'" onmouseleave="this.style.background='${r.c}15'">
-        <span style="font-size:28px">${r.e}</span>
-        <span style="color:${r.c};font-weight:800;font-size:14px">${t(r.lk)}</span>
-        <span style="color:${t2.txF};font-size:11px">${t(r.dk)}</span>
-      </button>`).join("")}
-    </div>`;
-  // Update lang buttons on home screen
-  ["ar","en","bn"].forEach(l=>{const el=document.getElementById("lb-"+l);if(el)el.classList.toggle("on",l===LANG);});
+  document.getElementById("home-body").innerHTML=
+    '<div style="font-size:56px;margin-bottom:8px;filter:drop-shadow(0 0 16px '+t2.ac+'60)">🌙</div>'
+   +'<h1 style="font-size:28px;font-weight:900;color:'+t2.ac+';margin:0 0 4px">'+S.cn+'</h1>'
+   +'<p style="color:'+t2.txS+';font-size:13px;margin-bottom:32px">'+t("admin_d")+'</p>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:480px">'
+   +rs.map(function(r){return'<button onclick="openRole(\''+r.id+'\')" style="background:'+r.c+'15;border:1px solid '+r.c+'35;border-radius:16px;padding:18px 14px;text-align:right;display:flex;flex-direction:column;gap:7px" onmouseenter="this.style.background=\''+r.c+'25\'" onmouseleave="this.style.background=\''+r.c+'15\'">'
+   +'<span style="font-size:28px">'+r.e+'</span><span style="color:'+r.c+';font-weight:800;font-size:14px">'+t(r.lk)+'</span>'
+   +'<span style="color:'+t2.txF+';font-size:11px">'+t(r.dk)+'</span></button>';}).join("")
+   +'</div>';
 }
+function openRole(r){if(r==="waiter")buildWaiter();else if(r==="kitchen")buildKitchen();else if(r==="admin")buildAdmin();nav("s-"+r);}
+function addLBar(id){var el=document.getElementById(id);if(el)el.innerHTML=lbar();}
 
-function openRole(role){
-  if(role==="waiter")  buildWaiter();
-  if(role==="kitchen") buildKitchen();
-  if(role==="admin")   buildAdmin();
-  if(role==="settings")buildSettings();
-  nav("s-"+role);
-}
-
-function buildLangBar(containerId){
-  const el=document.getElementById(containerId);if(!el)return;
-  el.innerHTML=langBar();
-}
-
-// ════ WAITER ════
+// ══════════════════════════════════════════════
+// WAITER
+// ══════════════════════════════════════════════
 var wTab=0,wSel=null,wCart=[],wCat="الكل";
 function buildWaiter(){
-  const t2=T();
-  document.getElementById("w-hdr").innerHTML=`
-    <button class="back" onclick="nav('s-home');buildHome()" style="background:${t2.sfH};color:${t2.txS}">←</button>
-    <span>🌙</span><span style="color:${t2.ac};font-weight:800;font-size:16px">${t("waiter")} 👨‍🍳</span>
-    <span style="margin-right:auto;color:${t2.txF};font-size:12px">${S.cn}</span>`;
-  document.getElementById("w-hdr").style.cssText+=`background:${t2.bgH};border-bottom:1px solid ${t2.bd}`;
-  buildLangBar("w-lang");
-  setWTab(0);
+  var t2=T();
+  document.getElementById("w-hdr").innerHTML='<button class="back" onclick="nav(\'s-home\');buildHome()" style="background:'+t2.sfH+';color:'+t2.txS+'">←</button><span>🌙</span><span style="color:'+t2.ac+';font-weight:800;font-size:16px">'+t("waiter")+' 👨‍🍳</span><span style="margin-right:auto;color:'+t2.txF+';font-size:12px">'+S.cn+'</span>';
+  document.getElementById("w-hdr").style.cssText+="background:"+t2.bgH+";border-bottom:1px solid "+t2.bd;
+  addLBar("w-lb"); setWTab(0);
 }
 function setWTab(n){
-  wTab=n;const t2=T();
-  const tbls=[t("tables"),t("new_order"),`${t("active_orders")} (${go_().filter(o=>o.status!=="delivered").length})`];
-  document.getElementById("w-tabs").innerHTML=tbls.map((l,i)=>`<button class="tab${n===i?" on":""}" onclick="setWTab(${i})" style="color:${n===i?"#3b82f6":T().txF};border-bottom-color:${n===i?"#3b82f6":"transparent"}">${l}</button>`).join("");
-  document.getElementById("w-tabs").style.cssText=`background:${t2.bgH};border-bottom:1px solid ${t2.bd};`;
-  [0,1,2].forEach(i=>{const el=document.getElementById(`w-tc${i}`);if(el)el.style.display=i===n?(n===0?"flex":"block"):"none";});
+  wTab=n; var t2=T();
+  var act=orders.filter(function(o){return o.status!=="delivered";}).length;
+  var ls=[t("tables"),t("new_order"),t("active")+" ("+act+")"];
+  document.getElementById("w-tabs").innerHTML=ls.map(function(l,i){return'<button class="tab'+(n===i?" on":"")+'" onclick="setWTab('+i+')" style="color:'+(n===i?"#3b82f6":T().txF)+';border-bottom-color:'+(n===i?"#3b82f6":"transparent")+'">'+l+'</button>';}).join("");
+  [0,1,2].forEach(function(i){var el=document.getElementById("w-tc"+i);if(el)el.style.display=i===n?(n===0?"flex":"block"):"none";});
   if(n===0)renderWTables();if(n===1)renderWOrder();if(n===2)renderWActive();
 }
 function renderWTables(){
-  const t2=T();const orders=go_().filter(o=>o.status!=="delivered");
-  const TABLES=Array.from({length:S.tc},(_,i)=>i+1);
-  document.getElementById("w-tc0").innerHTML=`<div class="scroll" style="padding:14px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    ${TABLES.map(id=>{const tords=orders.filter(o=>o.tableId===id),busy=tords.length>0;
-      return `<button onclick="wSel=${id};setWTab(1);renderWOrder()" style="background:${busy?"rgba(59,130,246,.1)":t2.sf};border:1px solid ${busy?"#3b82f6":t2.bd};border-radius:14px;padding:16px;text-align:right">
-        <div style="font-size:26px;margin-bottom:6px">${busy?"🔴":"🟢"}</div>
-        <div style="color:${busy?"#93c5fd":t2.tx};font-weight:800;font-size:15px">${t("table_lbl")} ${id}</div>
-        <div style="color:${busy?"#3b82f6":t2.txF};font-size:12px;margin-top:4px">${busy?tords.length+t("busy_orders"):t("available")}</div>
-      </button>`;}).join("")}
-  </div></div>`;}
+  var t2=T(); var active=orders.filter(function(o){return o.status!=="delivered";});
+  var TBLS=Array.from({length:S.tc},function(_,i){return i+1;});
+  document.getElementById("w-tc0").innerHTML='<div class="scroll" style="padding:14px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +TBLS.map(function(id){var tords=active.filter(function(o){return o.tableId===id;}),busy=tords.length>0;
+      return'<button onclick="wSel='+id+';setWTab(1);renderWOrder()" style="background:'+(busy?"rgba(59,130,246,.1)":t2.sf)+';border:1px solid '+(busy?"#3b82f6":t2.bd)+';border-radius:14px;padding:16px;text-align:right">'
+      +'<div style="font-size:26px;margin-bottom:6px">'+(busy?"🔴":"🟢")+'</div>'
+      +'<div style="color:'+(busy?"#93c5fd":t2.tx)+';font-weight:800;font-size:15px">'+t("tbl")+' '+id+'</div>'
+      +'<div style="color:'+(busy?"#3b82f6":t2.txF)+';font-size:12px;margin-top:4px">'+(busy?tords.length+t("busy"):t("available"))+'</div>'
+      +'</button>';}).join("")
+    +'</div></div>';
+  document.getElementById("w-tc0").style.cssText="display:flex;flex-direction:column;flex:1;overflow:hidden;";
+}
 function renderWOrder(){
-  const t2=T();const TABLES=Array.from({length:S.tc},(_,i)=>i+1);
-  const tot=wCart.reduce((s,i)=>s+i.price*i.qty,0);
-  let html=`<div style="padding:10px 14px;border-bottom:1px solid ${t2.bd};background:${t2.bgH};display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0">
-    <span style="color:${t2.txS};font-size:13px">${t("table_lbl")}:</span>
-    <select id="w-sel" onchange="wSel=Number(this.value)" style="background:${t2.sf};border:1px solid ${t2.bd};border-radius:8px;color:${t2.tx};padding:6px 10px;font-size:13px">
-      <option value="">${t("choose_table")}</option>
-      ${TABLES.map(i=>`<option value="${i}" ${wSel===i?"selected":""}>${t("table_lbl")} ${i}</option>`).join("")}
-    </select>
-    ${wCart.length>0?`<span style="margin-right:auto;color:${t2.ac};font-weight:700">${t("cart_label")}: ${tot} ${t("sar")}</span>`:""}
-  </div>
-  <div style="display:flex;gap:8px;padding:10px 14px;overflow-x:auto;background:${t2.bgH};border-bottom:1px solid ${t2.bd};flex-shrink:0">
-    ${AR_CATS.map((c,i)=>`<button onclick="wCat='${c}';renderWOrder()" style="background:${wCat===c?"#3b82f6":"rgba(59,130,246,.1)"};border:none;border-radius:20px;padding:5px 12px;color:${wCat===c?"#fff":"#3b82f6"};font-weight:700;font-size:12px;white-space:nowrap;flex-shrink:0">${t(CAT_KEYS[i])}</button>`).join("")}
-  </div>
-  <div class="scroll"><div style="padding:14px 14px 0;display:flex;flex-direction:column;gap:8px">
-    ${(wCat==="الكل"?MENU:MENU.filter(m=>m.cat===wCat)).map(item=>{
-      const q=wCart.find(i=>i.id===item.id)?.qty||0;
-      return `<div style="background:${t2.sf};border:1px solid ${t2.bd};border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px">
-        <img src="${item.img}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">
-        <div style="flex:1"><div style="color:${t2.tx};font-weight:700;font-size:14px">${iName(item)}</div>
-        ${LANG!=="ar"?`<div style="color:${t2.txM};font-size:11px">${item.name}</div>`:""}
-        <div style="color:${t2.ac};font-weight:800;font-size:13px">${item.price} ${t("sar")}</div></div>
-        <div style="display:flex;align-items:center;gap:6px">
-          ${q>0?`<button onclick="wCQ(${item.id},-1)" style="width:28px;height:28px;background:${t2.sfH};border:1px solid ${t2.bd};border-radius:7px;color:${t2.tx};font-size:15px;display:flex;align-items:center;justify-content:center">−</button><span style="color:#3b82f6;font-weight:900;min-width:18px;text-align:center">${q}</span>`:""}
-          <button onclick="wCQ(${item.id},1)" style="width:28px;height:28px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:7px;color:#3b82f6;font-size:15px;display:flex;align-items:center;justify-content:center">+</button>
-        </div>
-      </div>`;}).join("")}
-    <div style="height:80px"></div>
-  </div></div>`;
+  var t2=T(); var TBLS=Array.from({length:S.tc},function(_,i){return i+1;});
+  var tot=wCart.reduce(function(s,i){return s+i.price*i.qty;},0);
+  var html='<div style="padding:10px 14px;border-bottom:1px solid '+t2.bd+';background:'+t2.bgH+';display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0">'
+    +'<span style="color:'+t2.txS+';font-size:13px">'+t("tbl")+':</span>'
+    +'<select id="w-sel" onchange="wSel=Number(this.value)" style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:8px;color:'+t2.tx+';padding:6px 10px;font-size:13px">'
+    +'<option value="">'+t("choose_tbl")+'</option>'
+    +TBLS.map(function(i){return'<option value="'+i+'"'+(wSel===i?' selected':'')+'>'+t("tbl")+' '+i+'</option>';}).join("")+'</select>'
+    +(wCart.length>0?'<span style="margin-right:auto;color:'+t2.ac+';font-weight:700">'+t("cart_label"||"السلة")+': '+tot+' '+t("sar")+'</span>':"")
+    +'</div>'
+    +'<div style="display:flex;gap:8px;padding:10px 14px;overflow-x:auto;background:'+t2.bgH+';border-bottom:1px solid '+t2.bd+';flex-shrink:0">'
+    +CATS.map(function(c){return'<button onclick="wCat=\''+c+'\';renderWOrder()" style="background:'+(wCat===c?"#3b82f6":"rgba(59,130,246,.1)")+';border:none;border-radius:20px;padding:5px 12px;color:'+(wCat===c?"#fff":"#3b82f6")+';font-weight:700;font-size:12px;white-space:nowrap;flex-shrink:0">'+c+'</button>';}).join("")
+    +'</div>'
+    +'<div class="scroll"><div style="padding:14px 14px 0;display:flex;flex-direction:column;gap:8px">'
+    +(wCat==="الكل"?MENU:MENU.filter(function(m){return m.cat===wCat;})).map(function(item){
+      var q=wCart.find(function(i){return i.id===item.id;}); var qty=q?q.qty:0;
+      return'<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px">'
+        +'<img src="'+item.img+'" style="width:50px;height:50px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display=\'none\'">'
+        +'<div style="flex:1"><div style="color:'+t2.tx+';font-weight:700;font-size:14px">'+iName(item)+'</div>'
+        +(LANG!=="ar"?'<div style="color:'+t2.txM+';font-size:10px">'+item.name+'</div>':"")
+        +'<div style="color:'+t2.ac+';font-weight:800;font-size:13px">'+item.price+' '+t("sar")+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:6px">'
+        +(qty>0?'<button onclick="wCQ('+item.id+',-1)" style="width:28px;height:28px;background:'+t2.sfH+';border:1px solid '+t2.bd+';border-radius:7px;color:'+t2.tx+';font-size:15px;display:flex;align-items:center;justify-content:center">−</button><span style="color:#3b82f6;font-weight:900;min-width:18px;text-align:center">'+qty+'</span>':"")
+        +'<button onclick="wCQ('+item.id+',1)" style="width:28px;height:28px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:7px;color:#3b82f6;font-size:15px;display:flex;align-items:center;justify-content:center">+</button>'
+        +'</div></div>';
+    }).join("")+'<div style="height:80px"></div></div></div>';
   document.getElementById("w-tc1").innerHTML=html;
-  document.getElementById("w-tc1").style.display="flex";
-  document.getElementById("w-tc1").style.flexDirection="column";
-  document.getElementById("w-tc1").style.flex="1";
-  document.getElementById("w-tc1").style.overflow="hidden";
+  document.getElementById("w-tc1").style.cssText="display:flex;flex-direction:column;flex:1;overflow:hidden;";
   if(wCart.length>0&&wSel){
-    const fl=document.createElement("div");
-    fl.style.cssText=`position:sticky;bottom:0;padding:12px 14px;background:linear-gradient(0deg,${t2.bg} 70%,transparent);flex-shrink:0`;
-    fl.innerHTML=`<button onclick="wSend()" style="width:100%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;border-radius:14px;padding:14px 0;color:#fff;font-weight:800;font-size:16px">${t("send_kitchen")} — ${tot} ${t("sar")}</button>`;
+    var fl=document.createElement("div"); fl.style.cssText="position:sticky;bottom:0;padding:12px 14px;background:linear-gradient(0deg,"+T().bg+" 70%,transparent);flex-shrink:0";
+    fl.innerHTML='<button onclick="wSend()" style="width:100%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;border-radius:14px;padding:14px 0;color:#fff;font-weight:800;font-size:16px">'+t("send_kitchen"||"إرسال للمطبخ")+' — '+tot+' '+t("sar")+'</button>';
     document.getElementById("w-tc1").appendChild(fl);
   }
 }
-function wCQ(id,d){const item=MENU.find(m=>m.id===id),idx=wCart.findIndex(i=>i.id===id);
-  if(idx>=0){wCart[idx].qty+=d;if(wCart[idx].qty<=0)wCart.splice(idx,1);}else if(d>0)wCart.push({...item,qty:1});renderWOrder();}
+function wCQ(id,d){var item=MENU.find(function(m){return m.id===id;});var idx=wCart.findIndex(function(i){return i.id===id;});if(idx>=0){wCart[idx].qty+=d;if(wCart[idx].qty<=0)wCart.splice(idx,1);}else if(d>0)wCart.push(Object.assign({},item,{qty:1}));renderWOrder();}
 function wSend(){if(!wSel||!wCart.length)return;placeOrder(wSel,wCart,"waiter");wCart=[];wSel=null;setWTab(0);}
 function renderWActive(){
-  const t2=T();const orders=go_().filter(o=>o.status!=="delivered");const el=document.getElementById("w-tc2");
-  if(!orders.length){el.innerHTML=`<div class="empty"><div style="font-size:52px">✅</div><div style="color:${t2.txM};font-weight:700;margin-top:12px">${t("no_active")}</div></div>`;return;}
-  el.innerHTML=orders.map(o=>oCard(o,t2,true)).join("");}
+  var t2=T(); var act=orders.filter(function(o){return o.status!=="delivered";}); var el=document.getElementById("w-tc2");
+  if(!act.length){el.innerHTML='<div class="empty"><div style="font-size:52px">✅</div><div style="color:'+t2.txM+';font-weight:700;margin-top:12px">'+t("no_active")+'</div></div>';return;}
+  el.innerHTML=act.map(function(o){return oCard(o,t2,true,false);}).join("");
+}
 
-// ════ KITCHEN ════
+// ══════════════════════════════════════════════
+// KITCHEN
+// ══════════════════════════════════════════════
 var kFlt="pending";
 function buildKitchen(){
-  const t2=T();
-  document.getElementById("k-hdr").innerHTML=`
-    <button class="back" onclick="nav('s-home');buildHome()" style="background:${t2.sfH};color:${t2.txS}">←</button>
-    <span>🌙</span><span style="color:${t2.ac};font-weight:800;font-size:16px">${t("kitchen")} 🍳</span>
-    <span style="margin-right:auto;color:${t2.txF};font-size:12px">${S.cn}</span>`;
-  document.getElementById("k-hdr").style.cssText+=`background:${t2.bgH};border-bottom:1px solid ${t2.bd}`;
-  buildLangBar("k-lang");renderKitchen();
+  var t2=T();
+  document.getElementById("k-hdr").innerHTML='<button class="back" onclick="nav(\'s-home\');buildHome()" style="background:'+t2.sfH+';color:'+t2.txS+'">←</button><span>🌙</span><span style="color:'+t2.ac+';font-weight:800;font-size:16px">'+t("kitchen")+' 🍳</span><span style="margin-right:auto;color:'+t2.txF+';font-size:12px">'+S.cn+'</span>';
+  document.getElementById("k-hdr").style.cssText+="background:"+t2.bgH+";border-bottom:1px solid "+t2.bd;
+  addLBar("k-lb"); renderKitchen();
 }
 function renderKitchen(){
-  const t2=T();const orders=go_();
-  const pn=orders.filter(o=>o.status==="pending").length,rn=orders.filter(o=>o.status==="preparing").length;
-  document.getElementById("k-stats").innerHTML=[{l:t("waiting"),c:pn,col:"#f59e0b"},{l:t("preparing"),c:rn,col:"#3b82f6"},{l:t("total_orders"),c:orders.length,col:"#10b981"}].map(s=>`<div style="flex:1;background:${s.col}14;border:1px solid ${s.col}30;border-radius:10px;padding:8px 0;text-align:center"><div style="color:${s.col};font-weight:900;font-size:22px">${s.c}</div><div style="color:${s.col}99;font-size:11px">${s.l}</div></div>`).join("");
-  document.getElementById("k-filters").innerHTML=[{v:"pending",l:t("filter_pending")},{v:"preparing",l:t("filter_prep")},{v:"all",l:t("filter_all")}].map(f=>`<button onclick="kFlt='${f.v}';renderKitchen()" style="background:${kFlt===f.v?"#065f46":"rgba(16,185,129,.08)"};border:1px solid ${kFlt===f.v?"#10b981":"transparent"};border-radius:20px;padding:6px 14px;color:${kFlt===f.v?"#6ee7b7":"#10b981"};font-weight:700;font-size:12px">${f.l}</button>`).join("");
-  const shown=orders.filter(o=>kFlt==="all"?o.status!=="delivered":o.status===kFlt);
-  const el=document.getElementById("k-list");
-  if(!shown.length){el.innerHTML=`<div class="empty"><div style="font-size:52px">✅</div><div style="color:${t2.txM};font-weight:700;margin-top:12px">${t("no_orders")}</div><div style="color:${t2.txF};font-size:13px;margin-top:6px">${t("waiting_orders")}</div></div>`;return;}
-  el.innerHTML=shown.map(o=>{
-    const act=o.status==="pending"?`<button onclick="updOrd(${o.id},'preparing');renderKitchen()" style="flex:1;background:#1e3a8a;border:none;border-radius:10px;padding:9px 0;color:#93c5fd;font-weight:700;font-size:13px">${t("start_prep")}</button>`
-      :o.status==="preparing"?`<button onclick="updOrd(${o.id},'ready');renderKitchen()" style="flex:1;background:#064e3b;border:none;border-radius:10px;padding:9px 0;color:#6ee7b7;font-weight:700;font-size:13px">${t("mark_ready")}</button>`
-      :o.status==="ready"?`<button onclick="updOrd(${o.id},'delivered');renderKitchen()" style="flex:1;background:#4a1942;border:none;border-radius:10px;padding:9px 0;color:#e879f9;font-weight:700;font-size:13px">${t("mark_delivered")}</button>`:"";
-    const itemsHtml=o.items.map(i=>{const n=iName(i);const sz=i.sizeName?` (${i.sizeName})`:"";const note=i.note?`<span style="color:${t2.txM};font-size:11px"> 📝${i.note}</span>`:"";
-      return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="color:${t2.txS};font-size:13px">${i.emoji} ${n}${sz}${LANG!=="ar"?" <span style='color:"+t2.txM+";font-size:10px'>("+i.name+")</span>":""}</span>${note}
-        <span style="background:${t2.acBg};color:${t2.ac};border-radius:8px;padding:2px 10px;font-weight:700;font-size:13px">×${i.qty}</span>
-      </div>`;}).join("");
-    return `<div style="background:${o.status==="pending"?"rgba(245,158,11,.08)":"rgba(59,130,246,.08)"};border:1px solid ${o.status==="pending"?"#f59e0b30":"#3b82f630"};border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:10px">${bdg(o.status)}<div><span style="color:${t2.tx};font-weight:800">${t("table_lbl")} ${o.tableId}</span><span style="color:${t2.txM};font-size:12px;margin-right:8px">#${String(o.id).slice(-4)}·${o.at}</span></div></div>
-      <div style="margin-bottom:12px">${itemsHtml}</div>
-      <div style="display:flex;gap:8px">${act}</div>
-    </div>`;}).join("");}
+  var t2=T();
+  var pn=orders.filter(function(o){return o.status==="pending";}).length;
+  var rn=orders.filter(function(o){return o.status==="preparing";}).length;
+  document.getElementById("k-stats").innerHTML=[{l:t("waiting"),c:pn,col:"#f59e0b"},{l:t("preparing"),c:rn,col:"#3b82f6"},{l:t("total_ord"),c:orders.length,col:"#10b981"}].map(function(s){return'<div style="flex:1;background:'+s.col+'14;border:1px solid '+s.col+'30;border-radius:10px;padding:8px 0;text-align:center"><div style="color:'+s.col+';font-weight:900;font-size:22px">'+s.c+'</div><div style="color:'+s.col+'99;font-size:11px">'+s.l+'</div></div>';}).join("");
+  document.getElementById("k-filters").innerHTML=[{v:"pending",l:t("f_pending")},{v:"preparing",l:t("f_prep")},{v:"all",l:t("f_all")}].map(function(f){return'<button onclick="kFlt=\''+f.v+'\';renderKitchen()" style="background:'+(kFlt===f.v?"#065f46":"rgba(16,185,129,.08)")+';border:1px solid '+(kFlt===f.v?"#10b981":"transparent")+';border-radius:20px;padding:6px 14px;color:'+(kFlt===f.v?"#6ee7b7":"#10b981")+';font-weight:700;font-size:12px">'+f.l+'</button>';}).join("");
+  var shown=orders.filter(function(o){return kFlt==="all"?o.status!=="delivered":o.status===kFlt;});
+  var el=document.getElementById("k-list");
+  if(!shown.length){el.innerHTML='<div class="empty"><div style="font-size:52px">✅</div><div style="color:'+t2.txM+';font-weight:700;margin-top:12px">'+t("no_orders")+'</div><div style="color:'+t2.txF+';font-size:13px;margin-top:6px">'+t("w_orders")+'</div></div>';return;}
+  el.innerHTML=shown.map(function(o){return oCard(o,t2,true,true);}).join("");
+}
 
-// ════ ADMIN ════
+// ══════════════════════════════════════════════
+// ADMIN (5 tabs: Reports, Menu CMS, QR, Settings, All Orders)
+// ══════════════════════════════════════════════
+var aTab=0;
+var ACCS=[{n:"ذهبي",v:"#d4a017"},{n:"أزرق",v:"#2563eb"},{n:"أخضر",v:"#059669"},{n:"وردي",v:"#db2777"},{n:"بنفسجي",v:"#7c3aed"},{n:"برتقالي",v:"#ea580c"},{n:"تيل",v:"#0891b2"},{n:"أحمر",v:"#dc2626"}];
+
 function buildAdmin(){
-  const t2=T();const orders=go_();
-  document.getElementById("a-hdr").innerHTML=`
-    <button class="back" onclick="nav('s-home');buildHome()" style="background:${t2.sfH};color:${t2.txS}">←</button>
-    <span>🌙</span><span style="color:${t2.ac};font-weight:800;font-size:16px">${t("admin")} 📊</span>
-    <span style="margin-right:auto;color:${t2.txF};font-size:12px">${S.cn}</span>`;
-  document.getElementById("a-hdr").style.cssText+=`background:${t2.bgH};border-bottom:1px solid ${t2.bd}`;
-  buildLangBar("a-lang");
-  const del=orders.filter(o=>o.status==="delivered"),rev=del.reduce((s,o)=>s+o.total,0),pend=orders.filter(o=>o.status==="pending").length;
-  const freq={};orders.forEach(o=>o.items.forEach(i=>{freq[i.name]=(freq[i.name]||0)+i.qty;}));
-  const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const C=(e,l,v,col)=>`<div style="background:${col}10;border:1px solid ${col}25;border-radius:14px;padding:14px"><div style="font-size:26px;margin-bottom:4px">${e}</div><div style="color:${col};font-weight:900;font-size:22px">${v}</div><div style="color:${col}88;font-size:12px">${l}</div></div>`;
-  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-    ${C("📋",t("total_orders"),orders.length,t2.ac)}${C("⏳",t("waiting"),pend,"#f59e0b")}${C("✅",t("delivered_count"),del.length,"#10b981")}${C("💰",t("revenue"),rev+" "+t("sar"),"#8b5cf6")}</div>`;
-  if(top.length){html+=`<div style="background:${t2.sf};border:1px solid ${t2.bd};border-radius:14px;padding:14px;margin-bottom:14px"><h3 style="color:${t2.ac};margin:0 0 14px;font-size:15px">${t("top_items")}</h3>
-    ${top.map(([n,q],i)=>{const item=MENU.find(m=>m.name===n);const dn=item&&LANG!=="ar"?iName(item):n;
-      return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:${t2.txS};font-size:13px">#${i+1} ${dn}</span><span style="color:${t2.ac};font-weight:700;font-size:13px">${q}×</span></div>
-      <div style="background:${t2.bds||t2.bd};border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;background:${t2.ac};width:${(q/top[0][1])*100}%;border-radius:4px"></div></div></div>`;}).join("")}
-  </div>`;}
-  if(orders.length){html+=`<div style="background:${t2.sf};border:1px solid ${t2.bd};border-radius:14px;padding:14px"><h3 style="color:${t2.ac};margin:0 0 12px;font-size:15px">${t("all_orders")}</h3>
-    ${orders.map(o=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid ${t2.bd}">
-      ${bdg(o.status)}<div style="text-align:right"><div style="color:${t2.tx};font-weight:700;font-size:13px">${t("table_lbl")} ${o.tableId}·#${String(o.id).slice(-4)}</div>
-      <div style="color:${t2.txM};font-size:11px">${o.at}·${o.by==="waiter"?t("waiter_tag"):t("customer_tag")}</div></div>
-      <span style="color:${t2.ac};font-weight:800">${o.total} ${t("sar")}</span></div>`).join("")}
-  </div>`;}
-  else html+=`<div class="empty"><div style="font-size:52px">📊</div><div style="color:${t2.txM};font-weight:700;margin-top:12px">${t("no_data")}</div></div>`;
-  document.getElementById("a-body").innerHTML=html;
-  document.getElementById("a-body").style.background=t2.bg;
+  var t2=T();
+  document.getElementById("a-hdr").innerHTML='<button class="back" onclick="nav(\'s-home\');buildHome()" style="background:'+t2.sfH+';color:'+t2.txS+'">←</button><span>🌙</span><span style="color:'+t2.ac+';font-weight:800;font-size:16px">'+t("admin")+' 📊</span><span style="margin-right:auto;color:'+t2.txF+';font-size:12px">'+S.cn+'</span>';
+  document.getElementById("a-hdr").style.cssText+="background:"+t2.bgH+";border-bottom:1px solid "+t2.bd;
+  addLBar("a-lb");
+  var tabs=[t("reports"),"📋",t("menu_mgmt"),"🪑 "+t("qr_tables"),"⚙️ "+t("settings_t")];
+  var tlbls=["📊 "+t("reports"),"📋 "+t("all_orders"),"🍽️ "+t("menu_mgmt"),"📱 QR","⚙️"];
+  document.getElementById("a-tabs").innerHTML=tlbls.map(function(l,i){return'<button class="tab'+(aTab===i?" on":"")+'" onclick="setATab('+i+')" style="color:'+(aTab===i?T().ac:T().txF)+';border-bottom-color:'+(aTab===i?"var(--ac)":"transparent")+';font-size:11px">'+l+'</button>';}).join("");
+  setATab(aTab);
+}
+function setATab(n){
+  aTab=n; var t2=T();
+  for(var i=0;i<=4;i++){var el=document.getElementById("a-v"+i);if(el)el.style.display=i===n?"block":"none";var tb=document.getElementById("a-tabs")&&document.querySelectorAll("#a-tabs button")[i];if(tb){tb.classList.toggle("on",i===n);tb.style.color=i===n?t2.ac:t2.txF;tb.style.borderBottomColor=i===n?"var(--ac)":"transparent";}}
+  if(n===0)renderReports();else if(n===1)renderAllOrders();else if(n===2)renderMenuCMS();else if(n===3)renderQR();else if(n===4)renderSettings();
+}
+function renderReports(){
+  var t2=T(); var del=orders.filter(function(o){return o.status==="delivered";}); var rev=del.reduce(function(s,o){return s+o.total;},0); var pend=orders.filter(function(o){return o.status==="pending";}).length;
+  var freq={};orders.forEach(function(o){o.items.forEach(function(i){freq[i.name]=(freq[i.name]||0)+i.qty;});});
+  var top=Object.entries(freq).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  var tbl=Array.from({length:S.tc},function(_,i){return i+1;}).map(function(id){return{id,cnt:orders.filter(function(o){return o.tableId===id;}).length,rev:orders.filter(function(o){return o.tableId===id;}).reduce(function(s,o){return s+o.total;},0)};}).filter(function(x){return x.cnt>0;}).sort(function(a,b){return b.rev-a.rev;});
+  var C=function(e,l,v,col){return'<div style="background:'+col+'10;border:1px solid '+col+'25;border-radius:14px;padding:14px"><div style="font-size:26px;margin-bottom:4px">'+e+'</div><div style="color:'+col+';font-weight:900;font-size:22px">'+v+'</div><div style="color:'+col+'88;font-size:12px">'+l+'</div></div>';};
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+C("📋",t("total_ord"),orders.length,t2.ac)+C("⏳",t("waiting"),pend,"#f59e0b")+C("✅",t("del_cnt"),del.length,"#10b981")+C("💰",t("revenue"),rev+" "+t("sar"),"#8b5cf6")+'</div>';
+  if(top.length){html+='<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:14px;padding:14px;margin-bottom:14px"><h3 style="color:'+t2.ac+';margin:0 0 14px;font-size:15px">'+t("top_items")+'</h3>'+top.map(function(x,i){var item=MENU.find(function(m){return m.name===x[0];});return'<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:'+t2.txS+';font-size:13px">#'+(i+1)+' '+(item&&LANG!=="ar"?iName(item):x[0])+'</span><span style="color:'+t2.ac+';font-weight:700;font-size:13px">'+x[1]+'×</span></div><div style="background:'+t2.bd+';border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;background:'+t2.ac+';width:'+((x[1]/top[0][1])*100)+'%;border-radius:4px"></div></div></div>';}).join("")+'</div>';}
+  if(tbl.length){html+='<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:14px;padding:14px"><h3 style="color:'+t2.ac+';margin:0 0 12px;font-size:15px">'+t("tbl_sales")+'</h3>'+tbl.map(function(x){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid '+t2.bd+'"><span style="color:'+t2.txS+'">'+t("tbl")+' '+x.id+'</span><div style="display:flex;gap:12px"><span style="color:#3b82f6;font-size:13px">'+x.cnt+' '+t("orders"||"طلب")+'</span><span style="color:'+t2.ac+';font-weight:700">'+x.rev+' '+t("sar")+'</span></div></div>';}).join("")+'</div>';}
+  document.getElementById("a-v0").innerHTML=html;document.getElementById("a-v0").style.background=t2.bg;
+}
+function renderAllOrders(){
+  var t2=T(); var el=document.getElementById("a-v1");
+  if(!orders.length){el.innerHTML='<div class="empty"><div style="font-size:52px">📊</div><div style="color:'+t2.txM+';font-weight:700;margin-top:12px">'+t("no_data")+'</div></div>';return;}
+  el.innerHTML='<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:14px;padding:14px">'+orders.map(function(o){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid '+t2.bd+'">'+bdg(o.status)+'<div style="text-align:right"><div style="color:'+t2.tx+';font-weight:700;font-size:13px">'+t("tbl")+' '+o.tableId+'·#'+String(o.id).slice(-4)+'</div><div style="color:'+t2.txM+';font-size:11px">'+o.at+'·'+(o.by==="waiter"?t("waiter_tag"):t("customer_tag"))+'</div></div><span style="color:'+t2.ac+';font-weight:800">'+o.total+' '+t("sar")+'</span></div>';}).join("")+'</div>';
+  el.style.background=t2.bg;
+}
+// ── MENU CMS ──
+function renderMenuCMS(){
+  var t2=T(); var menuToUse=MENU;
+  var el=document.getElementById("a-v2"); el.style.background=t2.bg;
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    +'<h3 style="color:'+t2.ac+';font-size:15px">🍽️ '+t("menu_mgmt")+'</h3>'
+    +'<button onclick="openMenuModal(null)" style="background:'+t2.ac+';border:none;border-radius:10px;padding:8px 14px;color:#fff;font-weight:700;font-size:13px">'+t("add_item")+'</button>'
+    +'</div>'
+    +'<div id="menu-list">'
+    +menuToUse.map(function(item){return'<div class="menu-item-row" style="background:'+t2.sf+';border:1px solid '+(item.active===false?t2.bd+"50":t2.bd)+';opacity:'+(item.active===false?"0.5":"1")+'">'
+      +'<img class="mi-img" src="'+item.img+'" onerror="this.style.display=\'none\'">'
+      +'<div style="flex:1"><div style="color:'+t2.tx+';font-weight:700;font-size:14px">'+item.emoji+' '+item.name+'</div><div style="color:'+t2.txM+';font-size:12px">'+item.cat+' · '+item.price+' '+t("sar")+'</div></div>'
+      +'<button onclick="openMenuModal('+JSON.stringify(item)+')" style="background:'+t2.acBg+';border:1px solid '+t2.acBd+';border-radius:8px;padding:5px 10px;color:'+t2.ac+';font-weight:700;font-size:12px">✏️</button>'
+      +'</div>';}).join("")
+    +'</div>';
+}
+var editingItem=null;
+function openMenuModal(item){
+  editingItem=item;
+  setSafe("mi-title",item?"✏️ تعديل صنف":"➕ إضافة صنف");
+  document.getElementById("mi-id").value=item?item.id:"";
+  document.getElementById("mi-name").value=item?item.name:"";
+  document.getElementById("mi-price").value=item?item.price:"";
+  document.getElementById("mi-order").value=item?item.order||0:"";
+  document.getElementById("mi-cat").value=item?item.cat:"سمبوسة";
+  document.getElementById("mi-emoji").value=item?item.emoji:"🍽️";
+  document.getElementById("mi-img").value=item?item.img:"";
+  document.getElementById("mi-vars").value=item&&item.variants?item.variants.map(function(v){return v.n+"="+v.p;}).join(","):"";
+  document.getElementById("mi-active").checked=item?item.active!==false:true;
+  document.getElementById("mi-del-btn").style.display=item?"block":"none";
+  document.getElementById("mi-ov").classList.add("on");
+}
+function closeMenuModal(){document.getElementById("mi-ov").classList.remove("on");}
+function saveMenuItem(){
+  var name=document.getElementById("mi-name").value.trim();
+  var price=parseFloat(document.getElementById("mi-price").value)||0;
+  var cat=document.getElementById("mi-cat").value;
+  var emoji=document.getElementById("mi-emoji").value.trim()||"🍽️";
+  var img=document.getElementById("mi-img").value.trim();
+  var varsStr=document.getElementById("mi-vars").value.trim();
+  var active=document.getElementById("mi-active").checked;
+  var order=parseInt(document.getElementById("mi-order").value)||0;
+  if(!name||!price){toast("أدخل الاسم والسعر",false);return;}
+  var variants=[];
+  if(varsStr){varsStr.split(",").forEach(function(v){var p=v.split("=");if(p.length===2)variants.push({n:p[0].trim(),p:parseFloat(p[1].trim())||0});});}
+  var data={name,price,cat,emoji,img,active,order,variants:variants.length?variants:[]};
+  if(FB_OK&&db){
+    var id=editingItem?editingItem.id:null;
+    var ref=id?db.collection("menu").doc(id):db.collection("menu").doc();
+    ref.set(data,{merge:true}).then(function(){toast("✅ تم الحفظ",true);closeMenuModal();}).catch(function(e){toast("خطأ: "+e.message,false);});
+  } else {
+    // Update local MENU
+    var id=editingItem?editingItem.id:(MENU.reduce(function(m,x){return Math.max(m,x.id);},0)+1);
+    data.id=id;
+    var idx=MENU.findIndex(function(m){return m.id===id;});
+    if(idx>=0)MENU[idx]=data;else MENU.push(data);
+    toast("✅ تم الحفظ (محلياً)",true); closeMenuModal(); renderMenuCMS();
+  }
+}
+function deleteMenuItem(){
+  if(!editingItem)return;
+  if(!confirm("حذف "+editingItem.name+"؟"))return;
+  if(FB_OK&&db){
+    db.collection("menu").doc(editingItem.id).delete().then(function(){toast("🗑️ تم الحذف",true);closeMenuModal();}).catch(function(e){toast("خطأ: "+e.message,false);});
+  } else {
+    MENU=MENU.filter(function(m){return m.id!==editingItem.id;});
+    toast("🗑️ تم الحذف",true); closeMenuModal(); renderMenuCMS();
+  }
+}
+// ── QR CODES ──
+function renderQR(){
+  var t2=T(); var el=document.getElementById("a-v3"); el.style.background=t2.bg;
+  var base=window.location.origin+window.location.pathname.replace("staff.html","")+"customer.html";
+  el.innerHTML='<h3 style="color:'+t2.ac+';margin-bottom:14px;font-size:15px">📱 '+t("qr_tables")+'</h3>'
+    +'<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:12px;padding:14px;margin-bottom:14px">'
+    +'<label style="color:'+t2.txS+';font-size:13px;display:block;margin-bottom:6px">رابط صفحة الطلب</label>'
+    +'<input id="qr-base-url" value="'+base+'" style="width:100%;background:'+t2.sfH+';border:1px solid '+t2.bd+';border-radius:8px;padding:8px 12px;color:'+t2.tx+';font-size:13px;direction:ltr">'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px">'
+    +Array.from({length:S.tc},function(_,i){return i+1;}).map(function(n){return'<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:12px;padding:12px;text-align:center"><div style="color:'+t2.tx+';font-weight:700;margin-bottom:8px">'+t("tbl")+' '+n+'</div>'
+      +'<button onclick="genQR('+n+')" style="background:'+t2.acBg+';border:1px solid '+t2.acBd+';border-radius:8px;padding:6px 14px;color:'+t2.ac+';font-weight:700;font-size:12px">'+t("generate_qr")+'</button></div>';}).join("")
+    +'</div>';
+  el.style.background=t2.bg;
+}
+function genQR(n){
+  var base=document.getElementById("qr-base-url")?document.getElementById("qr-base-url").value.trim():window.location.origin+"/customer.html";
+  var url=base+"?table="+n;
+  setSafe("qr-title","QR — "+t("tbl")+" "+n);
+  setSafe("qr-url",url);
+  var c=document.getElementById("qr-canvas"); c.innerHTML="";
+  new QRCode(c,{text:url,width:200,height:200,colorDark:"#000",colorLight:"#fff"});
+  document.getElementById("qr-ov").classList.add("on");
+}
+function closeQR(){document.getElementById("qr-ov").classList.remove("on");}
+function printQR(){
+  var c=document.getElementById("qr-canvas");var t2=T();
+  var pa=document.getElementById("print-area");
+  pa.style.display="block";
+  pa.innerHTML='<div style="text-align:center;font-family:Cairo,sans-serif;direction:rtl;padding:20px"><h2>'+S.cn+'</h2><p>'+document.getElementById("qr-title").textContent+'</p>'+c.innerHTML+'<p style="font-size:11px;color:#888">'+document.getElementById("qr-url").textContent+'</p></div>';
+  window.print();
+  setTimeout(function(){pa.style.display="none";pa.innerHTML="";},1000);
+}
+// ── SETTINGS ──
+function renderSettings(){
+  var t2=T(); var el=document.getElementById("a-v4"); el.style.background=t2.bg;
+  var IS="background:"+t2.sfH+";border:1px solid "+t2.bd+";border-radius:8px;color:"+t2.tx+";padding:7px 12px;font-size:14px;text-align:right;font-family:'Cairo',sans-serif";
+  var sec=function(title,ch){return'<div style="background:'+t2.sf+';border:1px solid '+t2.bd+';border-radius:16px;overflow:hidden;margin-bottom:14px"><div style="padding:11px 16px;border-bottom:1px solid '+t2.bd+';background:'+t2.sfH+'"><span style="color:'+t2.txS+';font-weight:700;font-size:13px">'+title+'</span></div><div style="padding:16px">'+ch+'</div></div>';};
+  var row=function(l,ch){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid '+t2.bd+'"><span style="color:'+t2.tx+';font-size:14px">'+l+'</span>'+ch+'</div>';};
+  el.innerHTML=
+    sec(t("display_mode"),'<div style="display:flex;gap:8px;margin-bottom:12px">'
+      +[{v:"auto",l:"تلقائي 📱"},{v:"dark",l:"داكن 🌙"},{v:"light",l:"فاتح ☀️"}].map(function(o){return'<button onclick="S.mode=\''+o.v+'\';sSettings({...lSettings(),themeMode:\''+o.v+'\'});loadS();applyTheme();renderSettings()" style="flex:1;background:'+(S.mode===o.v?t2.acBg:t2.sf)+';border:1.5px solid '+(S.mode===o.v?t2.ac:t2.bd)+';border-radius:12px;padding:10px 6px;cursor:pointer"><div style="color:'+(S.mode===o.v?t2.ac:t2.txS)+';font-weight:800;font-size:13px">'+o.l+'</div></button>';}).join("")
+      +'</div><div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:'+t2.acBg+';border-radius:10px;border:1px solid '+t2.acBd+'"><span style="font-size:18px">'+(isDark()?"🌙":"☀️")+'</span><span style="color:'+t2.ac+';font-size:13px;font-weight:600">'+(isDark()?"داكن":"فاتح")+(S.mode==="auto"?" (تلقائي)":"")+'</span></div>')
+    +sec(t("accent_col"),'<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">'+ACCS.map(function(p){return'<button onclick="S.ac=\''+p.v+'\';sSettings({...lSettings(),accent:\''+p.v+'\'});applyTheme();renderSettings()" style="width:42px;height:42px;border-radius:50%;background:'+p.v+';border:3px solid '+(S.ac===p.v?"#fff":"transparent")+';cursor:pointer;box-shadow:'+(S.ac===p.v?"0 0 0 2px "+t2.bg+",0 0 0 4px "+p.v:"none")+'">'+( S.ac===p.v?'<span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.6)">✓</span>':"")+'</button>';}).join("")+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px"><span style="color:'+t2.txS+';font-size:13px">مخصص:</span><input type="color" value="'+S.ac+'" onchange="S.ac=this.value;sSettings({...lSettings(),accent:this.value});applyTheme()" style="width:42px;height:34px;border-radius:8px;border:1px solid '+t2.bd+';background:'+t2.sf+';cursor:pointer;padding:2px"></div>')
+    +sec(t("table_settings"),row(t("tbl_count"),'<div style="display:flex;align-items:center;gap:10px"><button onclick="if(S.tc>1){S.tc--;sSettings({...lSettings(),tableCount:S.tc});document.getElementById(\'tcn\').textContent=S.tc;}" style="width:36px;height:36px;background:'+t2.sfH+';border:1px solid '+t2.bd+';border-radius:9px;color:'+t2.txS+';font-size:20px;display:flex;align-items:center;justify-content:center">−</button><span id="tcn" style="color:'+t2.tx+';font-weight:900;font-size:24px;min-width:38px;text-align:center">'+S.tc+'</span><button onclick="if(S.tc<50){S.tc++;sSettings({...lSettings(),tableCount:S.tc});document.getElementById(\'tcn\').textContent=S.tc;}" style="width:36px;height:36px;background:'+t2.acBg+';border:1px solid '+t2.ac+';border-radius:9px;color:'+t2.ac+';font-size:20px;display:flex;align-items:center;justify-content:center">+</button></div>')
+      +row(t("tbl_prefix"),'<input value="'+S.tp+'" onchange="S.tp=this.value;sSettings({...lSettings(),tablePrefix:this.value})" style="'+IS+';width:130px">'))
+    +sec(t("cafe_info"),row(t("cafe_name"),'<input value="'+S.cn+'" onchange="S.cn=this.value;sSettings({...lSettings(),cafeName:this.value})'+(FB_OK?';db.collection(\'settings\').doc(\'cafe\').set({cafeName:S.cn},{merge:true}).catch(function(){})':'')+'" style="'+IS+';width:160px">'));
 }
 
-// ════ SETTINGS ════
-const ACCS=[{n:"ذهبي",v:"#d4a017"},{n:"أزرق",v:"#2563eb"},{n:"أخضر",v:"#059669"},{n:"وردي",v:"#db2777"},{n:"بنفسجي",v:"#7c3aed"},{n:"برتقالي",v:"#ea580c"},{n:"تيل",v:"#0891b2"},{n:"أحمر",v:"#dc2626"}];
-function buildSettings(){
-  const t2=T();
-  document.getElementById("st-hdr").innerHTML=`
-    <button class="back" onclick="nav('s-home');buildHome()" style="background:${t2.sfH};color:${t2.txS}">←</button>
-    <span>🌙</span><span style="color:${t2.ac};font-weight:800;font-size:16px">⚙️ ${t("settings")}</span>
-    <span style="margin-right:auto;color:${t2.txF};font-size:12px">${S.cn}</span>`;
-  document.getElementById("st-hdr").style.cssText+=`background:${t2.bgH};border-bottom:1px solid ${t2.bd}`;
-  buildLangBar("st-lang");
-  const sec=(title,ch)=>`<div style="background:${t2.sf};border:1px solid ${t2.bd};border-radius:16px;overflow:hidden;margin-bottom:14px"><div style="padding:11px 16px;border-bottom:1px solid ${t2.bd};background:${t2.sfH}"><span style="color:${t2.txS};font-weight:700;font-size:13px">${title}</span></div><div style="padding:16px">${ch}</div></div>`;
-  const row=(l,ch)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid ${t2.bd}"><span style="color:${t2.tx};font-size:14px">${l}</span>${ch}</div>`;
-  const IS=`background:${t2.sfH};border:1px solid ${t2.bd};border-radius:8px;color:${t2.tx};padding:7px 12px;font-size:14px;text-align:right;font-family:'Cairo',sans-serif`;
-  document.getElementById("st-body").style.background=t2.bg;
-  document.getElementById("st-body").innerHTML=
-    sec(t("display_mode"),`<div style="display:flex;gap:8px;margin-bottom:12px">
-      ${[{v:"auto",l:t("auto_mode")},{v:"dark",l:t("dark_mode")},{v:"light",l:t("light_mode")}].map(o=>`
-        <button onclick="S.mode='${o.v}';ss({themeMode:'${o.v}'});loadS();applyTheme();buildSettings()" style="flex:1;background:${S.mode===o.v?t2.acBg:t2.sf};border:1.5px solid ${S.mode===o.v?t2.ac:t2.bd};border-radius:12px;padding:10px 6px;cursor:pointer">
-          <div style="color:${S.mode===o.v?t2.ac:t2.txS};font-weight:800;font-size:13px">${o.l}</div>
-        </button>`).join("")}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:${t2.acBg};border-radius:10px;border:1px solid ${t2.acBd}">
-        <span style="font-size:18px">${isDark()?"🌙":"☀️"}</span>
-        <span style="color:${t2.ac};font-size:13px;font-weight:600">${t("current_mode")}: ${isDark()?t("dark_lbl"):t("light_lbl")} ${S.mode==="auto"?t("auto_lbl"):""}</span>
-      </div>`) +
-    sec(t("accent_color"),`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-      ${ACCS.map(p=>`<button onclick="S.ac='${p.v}';ss({accent:'${p.v}'});applyTheme();buildSettings()" style="width:42px;height:42px;border-radius:50%;background:${p.v};border:3px solid ${S.ac===p.v?"#fff":"transparent"};cursor:pointer;box-shadow:${S.ac===p.v?`0 0 0 2px ${t2.bg},0 0 0 4px ${p.v}`:"none"};display:flex;align-items:center;justify-content:center">${S.ac===p.v?'<span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.6)">✓</span>':""}</button>`).join("")}
-      </div>
-      <div style="display:flex;align-items:center;gap:10px"><span style="color:${t2.txS};font-size:13px">${t("custom")}:</span>
-        <input type="color" value="${S.ac}" onchange="S.ac=this.value;ss({accent:this.value});applyTheme()" style="width:42px;height:34px;border-radius:8px;border:1px solid ${t2.bd};background:${t2.sf};cursor:pointer;padding:2px">
-      </div>`) +
-    sec(t("table_settings"),`
-      ${row(t("table_count"),`<div style="display:flex;align-items:center;gap:10px">
-        <button onclick="if(S.tc>1){S.tc--;ss({tableCount:S.tc});document.getElementById('tc-n').textContent=S.tc;renderTP()}" style="width:36px;height:36px;background:${t2.sfH};border:1px solid ${t2.bd};border-radius:9px;color:${t2.txS};font-size:20px;display:flex;align-items:center;justify-content:center">−</button>
-        <span id="tc-n" style="color:${t2.tx};font-weight:900;font-size:24px;min-width:38px;text-align:center">${S.tc}</span>
-        <button onclick="if(S.tc<50){S.tc++;ss({tableCount:S.tc});document.getElementById('tc-n').textContent=S.tc;renderTP()}" style="width:36px;height:36px;background:${t2.acBg};border:1px solid ${t2.ac};border-radius:9px;color:${t2.ac};font-size:20px;display:flex;align-items:center;justify-content:center">+</button>
-      </div>`)}
-      <div style="padding:14px 0 6px">
-        <input type="range" min="1" max="50" value="${S.tc}" oninput="S.tc=Number(this.value);ss({tableCount:S.tc});document.getElementById('tc-n').textContent=S.tc;renderTP()" style="width:100%;accent-color:${t2.ac}">
-        <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:${t2.txF};font-size:11px">50</span><span style="color:${t2.ac};font-weight:700;font-size:12px" id="tc-lbl">${S.tc} ${t("tables_label")}</span><span style="color:${t2.txF};font-size:11px">1</span></div>
-      </div>
-      ${row(t("table_prefix"),`<input value="${S.tp}" onchange="S.tp=this.value;ss({tablePrefix:this.value});renderTP()" style="${IS};width:130px">`)}
-      <div id="tprev" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px"></div>`) +
-    sec(t("cafe_info"),`
-      ${row(t("cafe_name_lbl"),`<input value="${S.cn}" onchange="S.cn=this.value;ss({cafeName:this.value})" style="${IS};width:160px">`)}
-      <div style="margin-top:12px;padding:12px 16px;background:${t2.acBg};border-radius:12px;border:1px solid ${t2.acBd};display:flex;align-items:center;gap:10px">
-        <span style="font-size:22px">🌙</span><span style="color:${t2.ac};font-weight:900;font-size:18px">${S.cn}</span>
-      </div>`);
-  renderTP();
+// ══════════════════════════════════════════════
+// RECEIPT
+// ══════════════════════════════════════════════
+function showReceipt(o){
+  if(!o)return;
+  var sub=o.total; var tax=Math.round(sub*0.15*100)/100; var grand=sub+tax;
+  var rows=o.items.map(function(i){return'<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;color:#333"><span>'+i.emoji+' '+(i.display||i.name)+(i.sizeName?" ("+i.sizeName+")":"")+(i.note?" 📝"+i.note:"")+'</span><span>'+(i.price*i.qty)+' '+t("sar")+'</span></div>';}).join("");
+  var pa=document.getElementById("print-area"); pa.style.display="block";
+  pa.innerHTML='<div style="background:#fff;padding:24px;font-family:Cairo,sans-serif;direction:rtl;text-align:center;max-width:380px;margin:0 auto">'
+    +'<div style="font-size:40px">🌙</div><h2 style="font-weight:900;color:#0d0800;margin:4px 0">'+S.cn+'</h2>'
+    +'<p style="font-size:12px;color:#888;margin-bottom:16px">فاتورة ضريبية · '+t("tbl")+' '+o.tableId+'</p>'
+    +'<hr style="border:none;border-top:2px dashed #ddd;margin:12px 0">'
+    +rows
+    +'<hr style="border:none;border-top:2px dashed #ddd;margin:12px 0">'
+    +'<div style="display:flex;justify-content:space-between;font-size:14px;color:#666;margin-bottom:4px"><span>'+t("subtotal")+'</span><span>'+sub+' '+t("sar")+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:14px;color:#666;margin-bottom:4px"><span>'+t("tax_lbl")+'</span><span>'+tax+' '+t("sar")+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;color:#0d0800;border-top:2px solid #ddd;padding-top:8px;margin-top:4px"><span>'+t("total")+'</span><span>'+grand+' '+t("sar")+'</span></div>'
+    +'<p style="font-size:11px;color:#aaa;margin-top:12px">'+o.at+' · شكراً لزيارتكم</p>'
+    +'</div>';
+  window.print();
+  setTimeout(function(){pa.style.display="none";pa.innerHTML="";},1500);
 }
-function renderTP(){const t2=T();const el=document.getElementById("tprev");if(!el)return;const n=Math.min(S.tc,12);
-  el.innerHTML=Array.from({length:n},(_,i)=>`<span style="background:${t2.acBg};border:1px solid ${t2.acBd};border-radius:8px;padding:4px 10px;color:${t2.ac};font-size:12px;font-weight:700">${S.tp} ${i+1}</span>`).join("")+(S.tc>12?`<span style="color:${t2.txM};font-size:12px;padding:4px 8px">+${S.tc-12} ${t("others")}</span>`:"");
-  const lb=document.getElementById("tc-lbl");if(lb)lb.textContent=`${S.tc} ${t("tables_label")}`;}
 
-// ════ AUTO REFRESH ════
-setInterval(()=>{
-  const a=document.querySelector(".fscr.on");if(!a)return;
+// ══════════════════════════════════════════════
+// AUTO-REFRESH
+// ══════════════════════════════════════════════
+setInterval(function(){
+  var a=document.querySelector(".fscr.on");if(!a)return;
   if(a.id==="s-kitchen")renderKitchen();
   if(a.id==="s-waiter"&&wTab===2)renderWActive();
-},4000);
+  if(a.id==="s-admin"&&aTab===0)renderReports();
+  if(a.id==="s-admin"&&aTab===1)renderAllOrders();
+},5000);
 
-// ════ INIT ════
-loadS();applyTheme();setLang(LANG);buildHome();
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+loadS(); applyTheme(); setLangUI();
+setSafe("l-cafe-name",S.cn);
+// Check URL params for table (from QR)
+var urlTable=new URLSearchParams(window.location.search).get("table");
+if(urlTable){ /* staff doesn't need this but customer.html would use it */ }
 </script>
 </body>
 </html>
