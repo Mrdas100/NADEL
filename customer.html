@@ -81,6 +81,7 @@ input,textarea,select{font-family:var(--font);outline:none;}
 #toasts{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 .toast{background:#064e3b;border:1px solid #10b981;color:#6ee7b7;padding:10px 18px;border-radius:10px;font-size:14px;max-width:300px;text-align:right;animation:pop .3s ease;}
 @keyframes pop{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 /* MODAL */
 #mov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:8000;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px);}
 #mov.on{display:flex;}
@@ -267,11 +268,21 @@ input,textarea,select{font-family:var(--font);outline:none;}
 <!-- PAGE 0: SPLASH -->
 <div id="p0" class="page on">
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;position:relative;">
-    <button onclick="openDP()" style="position:absolute;top:16px;left:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:var(--tx3);padding:7px 10px;font-size:13px">🎨</button>
+
     <div id="sp-logo" class="splash-logo">🌙</div>
     <h1 id="sp-title" style="font-size:36px;font-weight:900;color:var(--ac);margin:0 0 6px">شاهي قمرا</h1>
     <p id="sp-sub" style="color:var(--tx2);font-size:14px;margin-bottom:40px">فطورك وسهرتك عندنا!</p>
-    <button onclick="openTP()" id="sp-btn" class="splash-btn" style="border-radius:16px;padding:16px 0">🪑 اطلب الآن</button>
+    <div style="width:100%;max-width:320px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;background:var(--card);border:1.5px solid var(--bd);border-radius:14px;overflow:hidden;transition:border-color .2s" id="phone-wrap">
+        <span style="padding:0 12px;font-size:18px;flex-shrink:0">📱</span>
+        <input id="customer-phone" type="tel" inputmode="numeric" placeholder="رقم جوالك (05xxxxxxxx)" maxlength="10"
+          style="flex:1;background:transparent;border:none;color:var(--tx);font-size:15px;padding:13px 8px 13px 0;direction:rtl;font-family:var(--font)"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+          onfocus="document.getElementById('phone-wrap').style.borderColor='var(--ac)'"
+          onblur="document.getElementById('phone-wrap').style.borderColor='var(--bd)'">
+      </div>
+    </div>
+    <button onclick="startWithPhone()" id="sp-btn" class="splash-btn" style="border-radius:16px;padding:16px 0">🪑 اطلب الآن</button>
     <div id="fb-status" style="margin-top:20px;font-size:12px;color:var(--tx4)"></div>
   </div>
 </div>
@@ -640,6 +651,22 @@ function showToast(msg, ok) {
   setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },3500);
 }
 
+function startWithPhone() {
+  var phone = document.getElementById("customer-phone").value.trim();
+  if (!phone || phone.length < 9) {
+    var wrap = document.getElementById("phone-wrap");
+    wrap.style.borderColor = "#f87171";
+    wrap.style.animation = "shake .3s ease";
+    setTimeout(function(){ wrap.style.borderColor="var(--bd)"; wrap.style.animation=""; }, 800);
+    showToast("أدخل رقم جوالك (05xxxxxxxx)", false);
+    return;
+  }
+  customerPhone = phone;
+  openTP();
+}
+
+var customerPhone = "";
+
 function openTP() {
   savedSettings = lSettings();
   var tc = savedSettings.tableCount || 10;
@@ -776,7 +803,7 @@ function renderCart() {
 function confirmOrder(){
   if(!cart.length) return;
   var total=cart.reduce(function(s,i){return s+i.price*i.qty;},0);
-  var order={id:Date.now(),tableId:curTable,items:JSON.parse(JSON.stringify(cart)),status:"pending",by:"customer",at:new Date().toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}),total:total};
+  var order={id:Date.now(),tableId:curTable,items:JSON.parse(JSON.stringify(cart)),status:"pending",by:"customer",phone:customerPhone,at:new Date().toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}),total:total};
   // Save to Firebase or localStorage
   if (FB_OK) {
     saveOrderToFB(order).then(function(fbId){
