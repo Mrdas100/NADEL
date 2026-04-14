@@ -143,9 +143,18 @@ var db=null, FB_OK=false;
 var orders=[];
 function listenOrders(){
   if(!db)return;
-  db.collection("orders").orderBy("createdAt","desc").limit(200)
-    .onSnapshot(snap=>{orders=[];snap.forEach(d=>orders.push({fbId:d.id,...d.data(),id:d.id}));if(curTab==="orders"||curTab==="reports")renderTab(curTab);},
-    ()=>{ loadLocalOrders(); });
+  db.collection("orders").limit(300)
+    .onSnapshot(snap=>{
+      orders=[];
+      snap.forEach(d=>orders.push({fbId:d.id,...d.data(),id:d.id}));
+      // Sort newest first client-side
+      orders.sort(function(a,b){
+        var ta=a.createdAt&&a.createdAt.toDate?a.createdAt.toDate().getTime():(typeof a.id==="number"?a.id:0);
+        var tb=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().getTime():(typeof b.id==="number"?b.id:0);
+        return tb-ta;
+      });
+      if(curTab==="orders"||curTab==="reports")renderTab(curTab);
+    }, ()=>{ loadLocalOrders(); });
 }
 function loadLocalOrders(){try{orders=JSON.parse(localStorage.getItem("qamra_orders")||"[]");}catch(e){orders=[];}}
 

@@ -148,15 +148,26 @@ var lastPendingCount = 0;
 // ══ FIREBASE LISTENER ══
 function startListener(){
   if(!db) return;
+  // No orderBy here — avoids composite index requirement
+  // We sort client-side instead
   orderListener = db.collection("orders")
     .where("status","in",["pending","preparing","ready"])
-    .orderBy("createdAt","asc")
     .onSnapshot(snap=>{
       orders=[];
       snap.forEach(d=>orders.push({fbId:d.id,...d.data(),id:d.id}));
+      // Sort by createdAt client-side (oldest first)
+      orders.sort(function(a,b){
+        var ta=a.createdAt&&a.createdAt.toDate?a.createdAt.toDate().getTime():(a.createdAt||0);
+        var tb=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().getTime():(b.createdAt||0);
+        return ta-tb;
+      });
       checkBeep();
       render();
-    }, err=>{ setSafe("fb-st","⚠️ "+err.code); startPoll(); });
+      setSafe("fb-st","🟢 متصل");
+    }, err=>{
+      setSafe("fb-st","⚠️ "+err.code);
+      startPoll();
+    });
 }
 function startPoll(){
   setInterval(()=>{

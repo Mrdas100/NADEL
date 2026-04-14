@@ -766,7 +766,6 @@ function startOrder(n,pfx){
   if(db){
     db.collection("orders")
       .where("tableId","==",n)
-      .orderBy("createdAt","desc")
       .onSnapshot(snap=>{
         localOrders=[];
         snap.forEach(d=>localOrders.push({fbId:d.id,...d.data(),id:d.id}));
