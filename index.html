@@ -4,116 +4,186 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#fef8ee">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title id="pg-t">شاهي قمرا</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Cairo',sans-serif;direction:rtl;background:#fef8ee;color:#1a0a00;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;}
-h1{font-size:32px;font-weight:900;color:#c8860a;margin:8px 0 5px;}
-.sub{color:#a07030;font-size:13px;margin-bottom:44px;}
-.cards{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px;}
-.card{border-radius:18px;padding:20px 22px;display:flex;align-items:center;gap:16px;text-decoration:none;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;transition:transform .15s,box-shadow .15s;}
+body{font-family:'Cairo',sans-serif;direction:rtl;background:#fef8ee;color:#1a0a00;min-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 100px;}
+.logo-wrap{position:relative;margin-bottom:12px;}
+.logo{font-size:80px;filter:drop-shadow(0 4px 20px rgba(200,134,10,.35));animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.cafe-name{font-size:30px;font-weight:900;color:#c8860a;margin:0 0 4px;text-align:center;}
+.cafe-sub{color:#a07030;font-size:13px;text-align:center;margin-bottom:40px;}
+
+/* ── FEATURE CARDS ── */
+.cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px;}
+.card{border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;text-decoration:none;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;}
 .card:active{transform:scale(.97);}
-.card-c{background:linear-gradient(135deg,#c8860a,#e8a820);box-shadow:0 6px 22px rgba(200,134,10,.35);}
+.card-c{background:linear-gradient(135deg,#c8860a 0%,#e8a820 100%);box-shadow:0 8px 24px rgba(200,134,10,.35);}
 .card-k{background:#fff;border:1.5px solid #e8d8a0;box-shadow:0 2px 12px rgba(150,90,0,.08);}
 .card-a{background:#fff;border:1.5px solid #e8d8a0;box-shadow:0 2px 12px rgba(150,90,0,.08);}
-.ico{font-size:36px;flex-shrink:0;}
-.txt{text-align:right;}
-.txt h2{font-size:17px;font-weight:800;margin:0 0 3px;}
-.txt p{font-size:12px;margin:0;opacity:.75;}
-.card-c .txt h2,.card-c .txt p{color:#fff;}
-.card-k .txt h2,.card-a .txt h2{color:#1a0a00;}
-.card-k .txt p,.card-a .txt p{color:#a07030;}
-/* PIN OVERLAY */
-#pin-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:24px;}
+.card-ico{font-size:38px;flex-shrink:0;width:52px;text-align:center;}
+.card-txt{text-align:right;flex:1;}
+.card-txt h2{font-size:16px;font-weight:800;margin:0 0 3px;}
+.card-txt p{font-size:12px;margin:0;opacity:.75;}
+.card-c .card-txt h2,.card-c .card-txt p{color:#fff;}
+.card-k .card-txt h2,.card-a .card-txt h2{color:#1a0a00;}
+.card-k .card-txt p,.card-a .card-txt p{color:#a07030;}
+.card-arrow{font-size:18px;color:rgba(255,255,255,.7);flex-shrink:0;}
+.card-k .card-arrow,.card-a .card-arrow{color:#d4a060;}
+.lock-badge{position:absolute;top:10px;left:14px;background:rgba(200,134,10,.12);border:1px solid rgba(200,134,10,.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#c8860a;font-weight:700;}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8d8a0;display:flex;padding-bottom:env(safe-area-inset-bottom,0);box-shadow:0 -4px 20px rgba(150,90,0,.10);z-index:100;}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent;border:none;background:none;font-family:'Cairo',sans-serif;text-decoration:none;transition:transform .12s;}
+.bn-item:active{transform:scale(.9);}
+.bn-ico{font-size:26px;margin-bottom:3px;transition:transform .2s;}
+.bn-lbl{font-size:11px;font-weight:700;color:#b08040;}
+.bn-item.active .bn-ico{transform:scale(1.15);}
+.bn-item.active .bn-lbl{color:#c8860a;}
+.bn-item.active .bn-dot{width:5px;height:5px;background:#c8860a;border-radius:50%;margin-top:2px;}
+.bn-dot{width:5px;height:5px;margin-top:2px;border-radius:50%;}
+
+/* ── PIN OVERLAY ── */
+#pin-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 #pin-ov.on{display:flex;}
-.pin-box{background:#fff;border-radius:20px;padding:26px;width:100%;max-width:320px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.15);}
-.pin-inp{width:100%;background:#fef3dd;border:1.5px solid #e8d8a0;border-radius:10px;padding:13px;color:#1a0a00;font-size:22px;letter-spacing:8px;text-align:center;margin:14px 0 8px;font-family:'Cairo',sans-serif;}
+.pin-sh{background:#fef8ee;border-radius:24px 24px 0 0;width:100%;max-width:420px;padding:16px 24px calc(env(safe-area-inset-bottom,0) + 24px);animation:su .25s ease;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pin-pill{width:40px;height:4px;background:#e8d8a0;border-radius:2px;margin:0 auto 16px;}
+.pin-inp{width:100%;background:#fff;border:1.5px solid #e8d8a0;border-radius:12px;padding:14px;color:#1a0a00;font-size:24px;letter-spacing:10px;text-align:center;font-family:'Cairo',sans-serif;}
 .pin-inp:focus{border-color:#c8860a;outline:none;}
-.pin-err{color:#dc2626;font-size:13px;min-height:16px;margin-bottom:10px;}
-.pin-go{width:100%;background:#c8860a;border:none;border-radius:12px;padding:13px;color:#fff;font-weight:800;font-size:15px;margin-bottom:8px;cursor:pointer;font-family:'Cairo',sans-serif;}
+.pin-err{color:#dc2626;font-size:13px;min-height:18px;text-align:center;margin:8px 0;}
+.pin-go{width:100%;background:#c8860a;border:none;border-radius:12px;padding:13px;color:#fff;font-weight:800;font-size:15px;margin-bottom:10px;cursor:pointer;font-family:'Cairo',sans-serif;}
 .pin-go:active{transform:scale(.98);}
 .pin-cancel{width:100%;background:none;border:none;color:#a07030;font-size:13px;text-decoration:underline;cursor:pointer;font-family:'Cairo',sans-serif;}
-@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-8px)}50%{transform:translateX(8px)}}
 </style>
 </head>
 <body>
 
 <!-- PIN OVERLAY -->
 <div id="pin-ov" onclick="if(event.target===this)closePin()">
-  <div class="pin-box" id="pin-box">
-    <div style="font-size:34px">🔐</div>
-    <h3 style="color:#c8860a;font-weight:800;font-size:17px;margin-top:6px">رمز الإدارة</h3>
-    <input id="pin-inp" class="pin-inp" type="password" inputmode="numeric" maxlength="6" placeholder="••••"
-      autocomplete="off" onkeydown="if(event.key==='Enter')checkPin()">
+  <div class="pin-sh" id="pin-sh">
+    <div class="pin-pill"></div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:36px;margin-bottom:6px">🔐</div>
+      <h3 style="color:#c8860a;font-weight:900;font-size:18px">رمز الإدارة</h3>
+    </div>
+    <input id="pin-inp" class="pin-inp" type="password" inputmode="numeric" maxlength="6"
+      placeholder="••••" autocomplete="off" onkeydown="if(event.key==='Enter')checkPin()">
     <div id="pin-err" class="pin-err"></div>
-    <button class="pin-go" onclick="checkPin()">دخول</button>
+    <button class="pin-go" onclick="checkPin()">دخول ←</button>
     <button class="pin-cancel" onclick="closePin()">إلغاء</button>
   </div>
 </div>
 
-<div style="font-size:66px;filter:drop-shadow(0 0 18px rgba(200,134,10,.3));margin-bottom:6px" id="logo">🌙</div>
-<h1 id="cafe-name">شاهي قمرا</h1>
-<p class="sub" id="cafe-sub">فطورك وسهرتك عندنا!</p>
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="logo-wrap">
+    <div class="logo" id="app-logo">🌙</div>
+  </div>
+  <h1 class="cafe-name" id="cafe-name">شاهي قمرا</h1>
+  <p class="cafe-sub" id="cafe-sub">فطورك وسهرتك عندنا!</p>
 
-<div class="cards">
-  <a href="customer.html" class="card card-c">
-    <span class="ico">📱</span>
-    <div class="txt"><h2>قائمة الطلبات</h2><p>اطلب من هنا</p></div>
-  </a>
+  <div class="cards">
+    <a href="customer.html" class="card card-c">
+      <div class="card-ico">📱</div>
+      <div class="card-txt">
+        <h2>قائمة الطلبات</h2>
+        <p>اطلب من هنا · تتبع طلبك</p>
+      </div>
+      <span class="card-arrow">←</span>
+    </a>
 
-  <a href="kitchen.html" class="card card-k">
-    <span class="ico">🍳</span>
-    <div class="txt"><h2>شاشة المطبخ</h2><p>استقبال وتحضير الطلبات</p></div>
-  </a>
+    <a href="kitchen.html" class="card card-k">
+      <div class="card-ico">🍳</div>
+      <div class="card-txt">
+        <h2>شاشة المطبخ</h2>
+        <p>استقبال وتحضير الطلبات</p>
+      </div>
+      <span class="card-arrow">←</span>
+    </a>
 
-  <button onclick="openPin()" class="card card-a">
-    <span class="ico">⚙️</span>
-    <div class="txt"><h2>الإدارة</h2><p>🔐 محمي برمز سري</p></div>
-  </button>
+    <button onclick="openPin()" class="card card-a">
+      <div class="card-ico">⚙️</div>
+      <div class="card-txt">
+        <h2>لوحة الإدارة</h2>
+        <p>تقارير · منيو · إعدادات</p>
+      </div>
+      <span class="card-arrow">←</span>
+      <span class="lock-badge">🔐 محمي</span>
+    </button>
+  </div>
 </div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <a href="customer.html" class="bn-item">
+    <span class="bn-ico">📱</span>
+    <span class="bn-lbl">الطلبات</span>
+    <span class="bn-dot"></span>
+  </a>
+  <a href="kitchen.html" class="bn-item">
+    <span class="bn-ico">🍳</span>
+    <span class="bn-lbl">المطبخ</span>
+    <span class="bn-dot"></span>
+  </a>
+  <a href="index.html" class="bn-item active">
+    <span class="bn-ico">🏠</span>
+    <span class="bn-lbl">الرئيسية</span>
+    <span class="bn-dot"></span>
+  </a>
+  <button onclick="openPin()" class="bn-item">
+    <span class="bn-ico">⚙️</span>
+    <span class="bn-lbl">الإدارة</span>
+    <span class="bn-dot"></span>
+  </button>
+</nav>
 
 <script>
 var PIN = localStorage.getItem("qamra_pin") || "1234";
 
-// Apply saved settings
 (function(){
-  try {
-    var s = JSON.parse(localStorage.getItem("qamra_s") || "{}");
-    if (s.cn) { document.getElementById("cafe-name").textContent = s.cn; document.getElementById("pg-t").textContent = s.cn; }
-    if (s.sub) document.getElementById("cafe-sub").textContent = s.sub;
-    if (s.logo) document.getElementById("logo").textContent = s.logo;
-  } catch(e) {}
+  try{
+    var s=JSON.parse(localStorage.getItem("qamra_s")||"{}");
+    if(s.cn){ document.getElementById("cafe-name").textContent=s.cn; document.getElementById("pg-t").textContent=s.cn; }
+    if(s.sub) document.getElementById("cafe-sub").textContent=s.sub;
+    if(s.design&&s.design.logo) document.getElementById("app-logo").textContent=s.design.logo;
+    if(s.design&&s.design.ac){
+      var r=document.documentElement;
+      r.style.setProperty("--ac",s.design.ac);
+    }
+  }catch(e){}
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
 
-function openPin() {
-  PIN = localStorage.getItem("qamra_pin") || "1234";
-  document.getElementById("pin-inp").value = "";
-  document.getElementById("pin-err").textContent = "";
+function openPin(){
+  PIN=localStorage.getItem("qamra_pin")||"1234";
+  document.getElementById("pin-inp").value="";
+  document.getElementById("pin-err").textContent="";
   document.getElementById("pin-ov").classList.add("on");
-  setTimeout(() => document.getElementById("pin-inp").focus(), 250);
+  setTimeout(()=>document.getElementById("pin-inp").focus(),300);
 }
-function closePin() { document.getElementById("pin-ov").classList.remove("on"); }
-function checkPin() {
-  var v = document.getElementById("pin-inp").value;
-  if (v === PIN) { closePin(); window.location.href = "admin.html"; }
-  else {
-    document.getElementById("pin-err").textContent = "رمز خاطئ";
-    var box = document.getElementById("pin-box");
-    box.style.animation = "shake .3s ease";
-    setTimeout(() => box.style.animation = "", 400);
-    document.getElementById("pin-inp").value = "";
+function closePin(){ document.getElementById("pin-ov").classList.remove("on"); }
+function checkPin(){
+  if(document.getElementById("pin-inp").value===PIN){
+    closePin(); window.location.href="admin.html";
+  } else {
+    document.getElementById("pin-err").textContent="رمز خاطئ";
+    var sh=document.getElementById("pin-sh");
+    sh.style.animation="none"; sh.offsetHeight;
+    sh.style.animation="shake .3s ease";
+    document.getElementById("pin-inp").value="";
     document.getElementById("pin-inp").focus();
   }
 }
-
-  // PWA Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
 </script>
 </body>
 </html>

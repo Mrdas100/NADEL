@@ -1100,5 +1100,62 @@ setInterval(()=>{if(activeTab===2)renderOrders();},4000);
   if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 </script>
+
+<!-- BOTTOM NAV -->
+<style>
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #e8d8a0;display:flex;padding-bottom:env(safe-area-inset-bottom,0);box-shadow:0 -4px 20px rgba(150,90,0,.10);z-index:500;}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 4px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent;border:none;background:none;font-family:'Cairo',sans-serif;text-decoration:none;transition:transform .12s;}
+.bni:active{transform:scale(.88);}
+.bni-ico{font-size:24px;margin-bottom:2px;}
+.bni-lbl{font-size:10px;font-weight:700;color:#b08040;}
+.bni.act .bni-lbl{color:#c8860a;}
+.bni.act .bni-ico{transform:scale(1.1);}
+.bni-dot{width:4px;height:4px;border-radius:50%;margin-top:2px;}
+.bni.act .bni-dot{background:#c8860a;}
+/* Add bottom padding to page content so nav doesn't cover it */
+.pg,.fscr,.scr:last-of-type{padding-bottom:70px;}
+</style>
+<nav class="bnav">
+  <a href="customer.html" class="bni act"><span class="bni-ico">📱</span><span class="bni-lbl">الطلبات</span><span class="bni-dot"></span></a>
+  <a href="kitchen.html" class="bni"><span class="bni-ico">🍳</span><span class="bni-lbl">المطبخ</span><span class="bni-dot"></span></a>
+  <a href="index.html" class="bni"><span class="bni-ico">🏠</span><span class="bni-lbl">الرئيسية</span><span class="bni-dot"></span></a>
+  <button onclick="openAdmNav()" class="bni"><span class="bni-ico">⚙️</span><span class="bni-lbl">الإدارة</span><span class="bni-dot"></span></button>
+</nav>
+
+<!-- PIN OVERLAY (from nav) -->
+<div id="bnav-pin-ov" onclick="if(event.target===this)closeBnavPin()" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:none;align-items:flex-end;justify-content:center;">
+  <div id="bnav-pin-sh" style="background:#fef8ee;border-radius:24px 24px 0 0;width:100%;max-width:420px;padding:16px 24px calc(env(safe-area-inset-bottom,0)+24px);animation:bnsu .25s ease;">
+    <div style="width:40px;height:4px;background:#e8d8a0;border-radius:2px;margin:0 auto 16px;"></div>
+    <div style="text-align:center;margin-bottom:14px"><div style="font-size:34px">🔐</div><h3 style="color:#c8860a;font-weight:900;font-size:17px;margin-top:5px">رمز الإدارة</h3></div>
+    <input id="bnav-pin-inp" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off"
+      style="width:100%;background:#fff;border:1.5px solid #e8d8a0;border-radius:12px;padding:13px;font-size:22px;letter-spacing:8px;text-align:center;font-family:Cairo,sans-serif"
+      onkeydown="if(event.key==='Enter')checkBnavPin()">
+    <div id="bnav-pin-err" style="color:#dc2626;font-size:13px;text-align:center;min-height:18px;margin:8px 0"></div>
+    <button onclick="checkBnavPin()" style="width:100%;background:#c8860a;border:none;border-radius:12px;padding:12px;color:#fff;font-weight:800;font-size:15px;margin-bottom:8px;cursor:pointer;font-family:Cairo,sans-serif">دخول ←</button>
+    <button onclick="closeBnavPin()" style="width:100%;background:none;border:none;color:#a07030;font-size:13px;text-decoration:underline;cursor:pointer;font-family:Cairo,sans-serif">إلغاء</button>
+  </div>
+</div>
+<style>@keyframes bnsu{from{transform:translateY(100%)}to{transform:translateY(0)}} @keyframes bnshk{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-7px)}50%{transform:translateX(7px)}}</style>
+<script>
+function openAdmNav(){
+  var PIN=localStorage.getItem("qamra_pin")||"1234";
+  document.getElementById("bnav-pin-inp").value="";
+  document.getElementById("bnav-pin-err").textContent="";
+  document.getElementById("bnav-pin-ov").style.display="flex";
+  setTimeout(function(){document.getElementById("bnav-pin-inp").focus();},280);
+}
+function closeBnavPin(){document.getElementById("bnav-pin-ov").style.display="none";}
+function checkBnavPin(){
+  var PIN=localStorage.getItem("qamra_pin")||"1234";
+  if(document.getElementById("bnav-pin-inp").value===PIN){
+    closeBnavPin(); window.location.href="admin.html";
+  } else {
+    document.getElementById("bnav-pin-err").textContent="رمز خاطئ";
+    var sh=document.getElementById("bnav-pin-sh");
+    sh.style.animation="none"; sh.offsetHeight; sh.style.animation="bnshk .3s ease";
+    document.getElementById("bnav-pin-inp").value="";
+  }
+}
+</script>
 </body>
 </html>
