@@ -1,0 +1,24 @@
+{
+  "name": "شاهي قمرا",
+  "short_name": "شاهي قمرا",
+  "description": "قائمة طلبات مقهى شاهي قمرا",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fef8ee",
+  "theme_color": "#c8860a",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["food", "shopping"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon.svg",     "sizes": "any",      "type": "image/svg+xml"}
+  ],
+  "shortcuts": [
+    {"name": "اطلب الآن",    "url": "./customer.html", "description": "قائمة الطلبات"},
+    {"name": "شاشة المطبخ", "url": "./kitchen.html",  "description": "استقبال الطلبات"}
+  ],
+  "screenshots": []
+}

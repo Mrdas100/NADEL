@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fef8ee">
 <title>شاهي قمرا — الإدارة</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -383,9 +385,54 @@ function renderSettings(el){
       <div>📦 الأصناف: ${MENU.length}</div><div>📋 الطلبات: ${orders.length}</div>
     </div>
   </div>
+  <div class="sec"><div class="sec-t">🖼️ أيقونة التطبيق (PWA)</div>
+    <p style="color:var(--tx3);font-size:12px;margin-bottom:12px">ارفع صورة مربعة (512×512 أو أكبر) لتصبح أيقونة التطبيق على الهاتف</p>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+      <img id="icon-preview" src="icon-192.png" style="width:64px;height:64px;border-radius:14px;object-fit:cover;border:1px solid var(--bd)" onerror="this.style.display='none'">
+      <div>
+        <div style="color:var(--tx);font-weight:700;font-size:13px;margin-bottom:4px">الأيقونة الحالية</div>
+        <label style="background:var(--ac);border-radius:8px;padding:7px 14px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:inline-block">
+          📂 تغيير الأيقونة
+          <input type="file" accept="image/*" onchange="uploadIcon(this)" style="display:none">
+        </label>
+      </div>
+    </div>
+    <p style="color:var(--tx4);font-size:11px">⚠️ بعد التغيير أعد تثبيت التطبيق على الهاتف لتظهر الأيقونة الجديدة</p>
+  </div>
   <button onclick="saveSettings()" style="width:100%;background:var(--ac);border:none;border-radius:14px;padding:13px;color:#fff;font-weight:800;font-size:15px;box-shadow:0 4px 18px var(--ac-bg)">💾 حفظ الإعدادات</button>`;
 }
 function chTc(d){var el=document.getElementById("tc-n");var v=parseInt(el.textContent)+d;if(v<1||v>50)return;el.textContent=v;}
+function uploadIcon(input){
+  if(!input.files||!input.files[0])return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var data=e.target.result;
+    // Save to localStorage for display
+    localStorage.setItem("qamra_icon",data);
+    // Update preview
+    var prev=document.getElementById("icon-preview");
+    if(prev){prev.src=data;prev.style.display="block";}
+    // Update manifest dynamically
+    try{
+      var link=document.querySelector("link[rel='apple-touch-icon']");
+      if(link) link.href=data;
+    }catch(ex){}
+    toast("✅ تم تغيير الأيقونة — أعد تثبيت التطبيق",true);
+    // Notify: user needs to reinstall PWA for icon to update
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadSavedIcon(){
+  var saved=localStorage.getItem("qamra_icon");
+  if(!saved)return;
+  try{
+    var link=document.querySelector("link[rel='apple-touch-icon']");
+    if(link) link.href=saved;
+  }catch(e){}
+}
+
 function saveSettings(){
   var cn=document.getElementById("s-cn")?.value.trim()||"شاهي قمرا";
   var sub=document.getElementById("s-sub")?.value.trim()||"";
@@ -454,9 +501,15 @@ function toast(msg,ok){
   var s=lS();if(s.cats&&s.cats.length)CATS=s.cats;
   try{var ex=JSON.parse(localStorage.getItem("qamra_ex")||"null");if(ex)EXTRAS=ex;}catch(e){}
   if(db)loadMenuFB();
+  loadSavedIcon();
   buildTabs(); renderTab("reports");
   setInterval(()=>{if(curTab==="orders"||curTab==="reports")renderTab(curTab);},8000);
 })();
+
+  // PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
 </script>
 </body>
 </html>
