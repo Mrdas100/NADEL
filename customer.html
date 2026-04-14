@@ -919,24 +919,47 @@ function confirmOrder(){
   var total=cart.reduce((s,i)=>s+i.price*i.qty,0);
   var order={id:Date.now(),tableId:curTable,items:JSON.parse(JSON.stringify(cart)),status:"pending",by:"customer",at:new Date().toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}),total};
   if(FB_OK&&db){
-    db.collection("orders").add(Object.assign({},order,{createdAt:firebase.firestore.FieldValue.serverTimestamp()}))
+    // Build clean Firestore doc — no complex nested objects
+    var fbDoc = {
+      tableId:  order.tableId,
+      items:    order.items.map(function(i){
+        return {
+          id:       i.id,
+          name:     i.name,
+          display:  i.display||i.name,
+          sizeName: i.sizeName||"",
+          price:    i.price,
+          qty:      i.qty,
+          cat:      i.cat||"",
+          emoji:    i.emoji||"",
+          note:     i.note||""
+        };
+      }),
+      status:   "pending",
+      by:       "customer",
+      at:       order.at,
+      total:    order.total,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    db.collection("orders").add(fbDoc)
       .then(function(ref){
-        order.fbId=ref.id;
+        order.fbId = ref.id;
         localOrders.unshift(order);
         if(btn){btn.disabled=false;btn.textContent="✅ تأكيد الطلب";}
         finishOrder();
+        toast("✅ تم الإرسال للمطبخ",true);
       })
       .catch(function(err){
-        // Show the actual error
-        console.error("Firestore error:", err.code, err.message);
-        toast("⚠️ خطأ Firebase: "+err.code,false);
+        console.error("Firestore write error:", err.code, err.message);
+        // Show error so user knows
+        toast("⚠️ "+err.code+" — حُفظ محلياً",false);
         if(btn){btn.disabled=false;btn.textContent="✅ تأكيد الطلب";}
-        // Still save locally as fallback
         saveOL(order);
       });
   } else {
     if(btn){btn.disabled=false;btn.textContent="✅ تأكيد الطلب";}
     saveOL(order);
+    toast("⚠️ لا إنترنت — حُفظ محلياً",false);
   }
 }
 function saveOL(o){var ors=lOrders();ors.unshift(o);sOrders(ors);localOrders.unshift(o);finishOrder();}

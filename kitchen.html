@@ -150,22 +150,38 @@ function startListener(){
   if(!db) return;
   // No orderBy here — avoids composite index requirement
   // We sort client-side instead
+  // Simple query — no where, no orderBy = no index needed
   orderListener = db.collection("orders")
-    .where("status","in",["pending","preparing","ready"])
-    .onSnapshot(snap=>{
+    .onSnapshot(function(snap){
       orders=[];
-      snap.forEach(d=>orders.push({fbId:d.id,...d.data(),id:d.id}));
-      // Sort by createdAt client-side (oldest first)
+      var total=0;
+      snap.forEach(function(d){
+        var o=d.data();
+        total++;
+        if(o.status!=="delivered"){
+          orders.push(Object.assign({},o,{fbId:d.id,id:d.id}));
+        }
+      });
+      setSafe("fb-st","🟢 متصل · "+total+" طلب");
+      // Sort oldest first
       orders.sort(function(a,b){
-        var ta=a.createdAt&&a.createdAt.toDate?a.createdAt.toDate().getTime():(a.createdAt||0);
-        var tb=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().getTime():(b.createdAt||0);
+        var ta=a.createdAt&&a.createdAt.toDate?a.createdAt.toDate().getTime():(typeof a.id==="number"?a.id:0);
+        var tb=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().getTime():(typeof b.id==="number"?b.id:0);
         return ta-tb;
       });
       checkBeep();
       render();
       setSafe("fb-st","🟢 متصل");
     }, err=>{
-      setSafe("fb-st","⚠️ "+err.code);
+      console.error("Firestore kitchen error:", err.code, err.message);
+      var msg = {
+        "failed-precondition": "⚠️ يحتاج index في Firestore",
+        "permission-denied":   "❌ Firestore Rules مغلقة — اضبط Rules",
+        "unavailable":         "📶 لا إنترنت — وضع محلي",
+        "not-found":           "⚠️ المشروع غير موجود",
+        "unauthenticated":     "🔒 يحتاج تسجيل دخول"
+      }[err.code] || ("⚠️ "+err.code);
+      setSafe("fb-st", msg);
       startPoll();
     });
 }
@@ -176,10 +192,19 @@ function startPoll(){
 }
 function updOrder(id,status,fbId){
   var label={preparing:t("preparing"),ready:t("ready"),delivered:t("delivered")};
-  if(FB_OK&&db){
-    var docId=fbId||id;
-    db.collection("orders").doc(String(docId)).update({status}).then(()=>toast(label[status]||status,true)).catch(e=>{toast("خطأ: "+e.message,false);updateLocal(id,status);});
-  } else { updateLocal(id,status); toast(label[status]||status,true); }
+  var docId = fbId && fbId!==id && fbId!=="undefined" ? String(fbId) : String(id);
+  if(FB_OK&&db&&docId){
+    db.collection("orders").doc(docId).update({status:status})
+      .then(function(){ toast(label[status]||status,true); })
+      .catch(function(e){
+        console.error("Update error:",e.code,docId);
+        toast("⚠️ "+e.code,false);
+        updateLocal(id,status);
+      });
+  } else {
+    updateLocal(id,status);
+    toast(label[status]||status,true);
+  }
 }
 function updateLocal(id,status){
   try{
@@ -257,9 +282,9 @@ function render(){
     }).join("");
 
     var actionHtml="";
-    if(o.status==="pending")   actionHtml=`<button class="abtn prep" onclick="updOrder('${o.id}','preparing','${o.fbId||o.id}')">${t("start")}</button>`;
-    else if(o.status==="preparing") actionHtml=`<button class="abtn ready" onclick="updOrder('${o.id}','ready','${o.fbId||o.id}')">${t("mkready")}</button>`;
-    else if(o.status==="ready")     actionHtml=`<button class="abtn done" onclick="updOrder('${o.id}','delivered','${o.fbId||o.id}')">${t("mkdone")}</button>`;
+    if(o.status==="pending")   actionHtml=`<button class="abtn prep" onclick="updOrder('${o.fbId||o.id}','preparing','${o.fbId||o.id}')">${t("start")}</button>`;
+    else if(o.status==="preparing") actionHtml=`<button class="abtn ready" onclick="updOrder('${o.fbId||o.id}','ready','${o.fbId||o.id}')">${t("mkready")}</button>`;
+    else if(o.status==="ready")     actionHtml=`<button class="abtn done" onclick="updOrder('${o.fbId||o.id}','delivered','${o.fbId||o.id}')">${t("mkdone")}</button>`;
 
     var cardClass="ocard"+(" "+o.status)+(mins!==null&&mins<1?" new":"");
     return `<div class="${cardClass}">
