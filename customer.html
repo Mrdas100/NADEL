@@ -761,7 +761,20 @@ function startOrder(n,pfx){
   curTable=n;curCat="الكل";cart=[];localOrders=[];
   setSafe("tlbl",(pfx||"طاولة")+" "+n);
   buildCats();renderItems();swTab(0);showP("p2");
-  if(db)db.collection("orders").where("tableId","==",n).where("status","!=","delivered").onSnapshot(snap=>{localOrders=[];snap.forEach(d=>localOrders.push({fbId:d.id,...d.data()}));if(activeTab===2)renderOrders();});
+  // Real-time listener for order status updates
+  if(db){
+    db.collection("orders")
+      .where("tableId","==",n)
+      .orderBy("createdAt","desc")
+      .onSnapshot(snap=>{
+        localOrders=[];
+        snap.forEach(d=>localOrders.push({fbId:d.id,...d.data(),id:d.id}));
+        if(activeTab===2)renderOrders();
+        // update tab badge
+        var active=localOrders.filter(o=>o.status!=="delivered").length;
+        setSafe("tb2",active?"طلباتي ("+active+")":"طلباتي");
+      }, ()=>{}); // silent fail, fallback to localStorage
+  }
 }
 
 // ══ CATS + ITEMS ══
@@ -907,12 +920,26 @@ function confirmOrder(){
   else saveOL(order);
 }
 function saveOL(o){var ors=lOrders();ors.unshift(o);sOrders(ors);localOrders.unshift(o);finishOrder();}
-function finishOrder(){cart=[];renderCart();renderOrders();updFL();swTab(2);toast("✅ تم إرسال طلبك!",true);}
+function finishOrder(){
+  cart=[];renderCart();updFL();
+  // Small delay to let Firebase snapshot catch up
+  swTab(2);
+  setTimeout(renderOrders, FB_OK?800:0);
+  toast("✅ تم إرسال طلبك!",true);
+}
 
 // ══ ORDERS ══
 function renderOrders(){
   var el=document.getElementById("obox");
-  var ords=localOrders.length?localOrders:lOrders().filter(o=>o.tableId===curTable);
+  // Use Firebase real-time data if available, else localStorage
+  var ords;
+  if(localOrders.length>0){
+    ords=localOrders;
+  } else if(FB_OK){
+    ords=localOrders; // wait for snapshot
+  } else {
+    ords=lOrders().filter(o=>o.tableId===curTable);
+  }
   if(!ords.length){el.innerHTML='<div class="empty"><div class="ei">📋</div><div class="em">لا طلبات بعد</div><div class="es">اطلب وتابع هنا</div></div>';setSafe("tb2","طلباتي");return;}
   setSafe("tb2","طلباتي ("+ords.length+")");
   var STEPS=["pending","preparing","ready","delivered"];
