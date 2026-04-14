@@ -910,14 +910,34 @@ function renderCart(){
   var tb=document.createElement("div");tb.className="tbox";
   tb.innerHTML='<div class="trow"><span>المجموع</span><span>'+total+' ريال</span></div><div class="trow"><span>ضريبة 15%</span><span>'+tax+' ريال</span></div><div class="trow tot"><span>الإجمالي</span><span>'+grand+' ريال</span></div>';
   el.appendChild(tb);
-  var cfm=document.createElement("button");cfm.className="cfm";cfm.textContent="✅ تأكيد الطلب";cfm.onclick=confirmOrder;el.appendChild(cfm);
+  var cfm=document.createElement("button");cfm.className="cfm";cfm.id="cfm-btn";cfm.textContent="✅ تأكيد الطلب";cfm.onclick=confirmOrder;el.appendChild(cfm);
 }
 function confirmOrder(){
   if(!cart.length)return;
+  var btn=document.getElementById("cfm-btn");
+  if(btn){btn.disabled=true;btn.textContent="⏳ جاري الإرسال...";}
   var total=cart.reduce((s,i)=>s+i.price*i.qty,0);
   var order={id:Date.now(),tableId:curTable,items:JSON.parse(JSON.stringify(cart)),status:"pending",by:"customer",at:new Date().toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"}),total};
-  if(FB_OK&&db){db.collection("orders").add({...order,createdAt:firebase.firestore.FieldValue.serverTimestamp()}).then(ref=>{order.fbId=ref.id;localOrders.unshift(order);finishOrder();}).catch(()=>{saveOL(order);});}
-  else saveOL(order);
+  if(FB_OK&&db){
+    db.collection("orders").add(Object.assign({},order,{createdAt:firebase.firestore.FieldValue.serverTimestamp()}))
+      .then(function(ref){
+        order.fbId=ref.id;
+        localOrders.unshift(order);
+        if(btn){btn.disabled=false;btn.textContent="✅ تأكيد الطلب";}
+        finishOrder();
+      })
+      .catch(function(err){
+        // Show the actual error
+        console.error("Firestore error:", err.code, err.message);
+        toast("⚠️ خطأ Firebase: "+err.code,false);
+        if(btn){btn.disabled=false;btn.textContent="✅ تأكيد الطلب";}
+        // Still save locally as fallback
+        saveOL(order);
+      });
+  } else {
+    if(btn){btn.disabled=false;btn.textContent="✅ تأكيد الطلب";}
+    saveOL(order);
+  }
 }
 function saveOL(o){var ors=lOrders();ors.unshift(o);sOrders(ors);localOrders.unshift(o);finishOrder();}
 function finishOrder(){
@@ -929,6 +949,35 @@ function finishOrder(){
 }
 
 // ══ ORDERS ══
+function cancelOrder(btn){
+  var fbId = btn.getAttribute("data-id");
+  var lid  = btn.getAttribute("data-lid");
+  if(!confirm("إلغاء هذا الطلب؟")) return;
+  btn.disabled=true; btn.textContent="⏳";
+  // Remove from Firebase
+  if(FB_OK&&db&&fbId){
+    db.collection("orders").doc(String(fbId)).delete()
+      .then(function(){
+        // Remove from localOrders
+        localOrders=localOrders.filter(function(o){return (o.fbId||o.id)!=fbId && String(o.id)!=String(lid);});
+        toast("✅ تم إلغاء الطلب",true);
+        renderOrders();
+      })
+      .catch(function(e){
+        toast("⚠️ خطأ: "+e.code,false);
+        btn.disabled=false; btn.textContent="🗑️ إلغاء";
+      });
+  } else {
+    // localStorage fallback
+    var ors=lOrders();
+    ors=ors.filter(function(o){return String(o.id)!==String(lid);});
+    sOrders(ors);
+    localOrders=localOrders.filter(function(o){return String(o.id)!==String(lid);});
+    toast("✅ تم إلغاء الطلب",true);
+    renderOrders();
+  }
+}
+
 function renderOrders(){
   var el=document.getElementById("obox");
   // Use Firebase real-time data if available, else localStorage
@@ -948,7 +997,7 @@ function renderOrders(){
     var s=SM[o.status]||SM.pending;var si=STEPS.indexOf(o.status);
     var steps=STEPS.map((st,i)=>{var sm=SM[st];return'<div class="sstep'+(i<=si?" dn":"")+'">'+'<div class="sdot">'+sm.e+'</div><div>'+sm.txt.replace("!","")+'</div>'+(i<STEPS.length-1?'<div class="sln'+(i<si?" dn":"")+'"></div>':'')+'</div>';}).join("");
     var chips=o.items.map(it=>'<div style="margin-bottom:3px"><span class="chip">'+it.emoji+' '+(it.display||it.name)+' ×'+it.qty+'</span>'+(it.note?'<span style="color:var(--tx3);font-size:10px"> · '+it.note+'</span>':"")+'</div>').join("");
-    return'<div class="ocard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="bdg '+s.cls+'">'+s.txt+'</span><span style="color:var(--tx3);font-size:12px">'+o.at+'</span></div><div class="ssteps">'+steps+'</div><div style="margin-bottom:10px">'+chips+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--ac);font-weight:900;font-size:16px">'+o.total+' ريال</span><button onclick="showRc(this)" data-o=\''+JSON.stringify(o).replace(/'/g,"&#39;").replace(/\n/g,"")+'\' style="background:var(--ac-bg);border:1px solid var(--ac-bd);border-radius:8px;padding:5px 12px;color:var(--ac);font-weight:700;font-size:12px">🧾 فاتورة</button></div></div>';
+    return'<div class="ocard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="bdg '+s.cls+'">'+s.txt+'</span><span style="color:var(--tx3);font-size:12px">'+o.at+'</span></div><div class="ssteps">'+steps+'</div><div style="margin-bottom:10px">'+chips+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--ac);font-weight:900;font-size:16px">'+o.total+' ريال</span><button onclick="showRc(this)" data-o=\''+JSON.stringify(o).replace(/'/g,"&#39;").replace(/\n/g,"")+'\' style="background:var(--ac-bg);border:1px solid var(--ac-bd);border-radius:8px;padding:5px 12px;color:var(--ac);font-weight:700;font-size:12px">🧾 فاتورة</button>'+(o.status==="pending"?'<button onclick="cancelOrder(this)" data-id="'+(o.fbId||o.id)+'" data-lid="'+o.id+'" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:5px 12px;color:#dc2626;font-weight:700;font-size:12px">🗑️ إلغاء</button>':'')+'</div></div>';
   }).join("");
 }
 
