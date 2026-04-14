@@ -79,6 +79,7 @@ button{font-family:'Cairo','Noto Sans Bengali',sans-serif;cursor:pointer;border:
   <span style="font-size:20px">🍳</span>
   <span style="color:var(--ac);font-weight:800;font-size:16px" id="k-title">شاشة المطبخ</span>
   <span style="margin-right:auto;font-size:11px;color:var(--tx4)" id="fb-st">جاري الاتصال...</span>
+  <button onclick="clearTable()" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:5px 10px;color:#dc2626;font-weight:700;font-size:12px">🪑 تحرير طاولة</button>
 </div>
 
 <div class="lb">
@@ -296,6 +297,32 @@ function render(){
       <div style="display:flex;gap:8px">${actionHtml}</div>
     </div>`;
   }).join("");
+}
+
+function clearTable(){
+  var n=prompt("رقم الطاولة لتحريرها:");
+  var tid=parseInt(n);
+  if(!tid){ return; }
+  var tblOrders=orders.filter(function(o){return o.tableId===tid;});
+  if(!tblOrders.length){ alert("لا طلبات نشطة لهذه الطاولة"); return; }
+  if(!confirm("تحرير طاولة "+tid+"؟ ("+tblOrders.length+" طلب)")) return;
+  if(db&&FB_OK){
+    var promises=tblOrders.map(function(o){
+      var id=o.fbId||o.id;
+      return db.collection("orders").doc(String(id)).delete();
+    });
+    Promise.all(promises)
+      .then(function(){ toast("✅ تم تحرير الطاولة "+tid,true); })
+      .catch(function(e){ toast("⚠️ "+e.code,false); });
+  } else {
+    try{
+      var ors=JSON.parse(localStorage.getItem("qamra_orders")||"[]");
+      ors=ors.filter(function(o){return !(o.tableId===tid&&o.status!=="delivered");});
+      localStorage.setItem("qamra_orders",JSON.stringify(ors));
+      orders=orders.filter(function(o){return o.tableId!==tid;});
+      render(); toast("✅ تم تحرير الطاولة "+tid,true);
+    }catch(e){}
+  }
 }
 
 function setFilter(f){ filter=f; render(); }

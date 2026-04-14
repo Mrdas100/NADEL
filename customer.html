@@ -76,9 +76,9 @@ input,textarea,select{font-family:var(--fn);outline:none;}
 .cfm{width:100%;background:var(--ac);border:none;border-radius:var(--r);padding:14px 0;color:#fff;font-weight:800;font-size:16px;box-shadow:0 4px 18px var(--ac-bg);}
 .cfm:active{transform:scale(.98);}
 /* TABLES */
-.tg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:16px;}
-.tb2{background:var(--card);border:1.5px solid var(--ac-bd);border-radius:var(--r);color:var(--ac);font-weight:800;font-size:18px;padding:14px 0;box-shadow:var(--sh);}
-.tb2:active{background:var(--ac);color:#fff;transform:scale(.95);}
+.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px;}
+.tb2{background:var(--card);border:1.5px solid var(--ac-bd);border-radius:var(--r);color:var(--ac);font-weight:800;font-size:14px;padding:14px 8px;box-shadow:var(--sh);line-height:1.4;}
+.tb2:active{transform:scale(.95);}
 /* ORDER */
 .ocard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--sh);}
 .bdg{border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;}
@@ -751,29 +751,76 @@ function toast(msg,ok){
 function openTP(){
   var s=lS(); var tc=SS.tc||s.tc||10; var tp=SS.tp||s.tp||"طاولة"; var cn=s.cn||"شاهي قمرا";
   setSafe("ht1",cn);setSafe("ht2",cn);
-  var grid=document.getElementById("tgrid");grid.innerHTML="";
-  for(var i=1;i<=tc;i++){(function(n,p){
-    var b=document.createElement("button");b.className="tb2";b.textContent=n;
-    b.onclick=()=>startOrder(n,p);grid.appendChild(b);
-  })(i,tp);}
+  buildTableGrid(tc,tp);
   showP("p1");
+}
+
+function buildTableGrid(tc,tp){
+  // Get active orders to show table status
+  var activeOrders=[];
+  if(FB_OK&&db){
+    db.collection("orders").where("status","in",["pending","preparing","ready"]).get()
+      .then(function(snap){
+        var busy={};
+        snap.forEach(function(d){ busy[d.data().tableId]=true; });
+        renderTableGrid(tc,tp,busy);
+      })
+      .catch(function(){ renderTableGrid(tc,tp,{}); });
+  } else {
+    var stored=lOrders();
+    var busy={};
+    stored.filter(function(o){return o.status!=="delivered";}).forEach(function(o){busy[o.tableId]=true;});
+    renderTableGrid(tc,tp,busy);
+  }
+}
+
+function renderTableGrid(tc,tp,busy){
+  var grid=document.getElementById("tgrid"); grid.innerHTML="";
+  for(var i=1;i<=tc;i++){(function(n,p){
+    var isBusy=busy[n];
+    var btn=document.createElement("button");
+    btn.className="tb2";
+    btn.style.cssText=isBusy
+      ?"border-color:rgba(220,38,38,.4);background:rgba(220,38,38,.06);"
+      :"";
+    btn.innerHTML='<div style="font-size:22px;margin-bottom:4px">'+(isBusy?"🔴":"🟢")+'</div>'
+      +'<div style="font-size:16px;font-weight:900">'+p+' '+n+'</div>'
+      +'<div style="font-size:10px;color:'+(isBusy?"#dc2626":"#047857")+';">'+(isBusy?"مشغولة":"شاغرة")+'</div>';
+    btn.onclick=function(){startOrder(n,p);};
+    grid.appendChild(btn);
+  })(i,tp);}
 }
 function startOrder(n,pfx){
   curTable=n;curCat="الكل";cart=[];localOrders=[];
   setSafe("tlbl",(pfx||"طاولة")+" "+n);
   buildCats();renderItems();swTab(0);showP("p2");
-  // Real-time listener for order status updates
   if(db){
+    // Real-time listener — loads ALL orders for this table (history included)
     db.collection("orders")
       .where("tableId","==",n)
-      .onSnapshot(snap=>{
+      .onSnapshot(function(snap){
         localOrders=[];
-        snap.forEach(d=>localOrders.push({fbId:d.id,...d.data(),id:d.id}));
-        if(activeTab===2)renderOrders();
-        // update tab badge
-        var active=localOrders.filter(o=>o.status!=="delivered").length;
+        snap.forEach(function(d){
+          localOrders.push(Object.assign({},d.data(),{fbId:d.id,id:d.id}));
+        });
+        // Sort newest first
+        localOrders.sort(function(a,b){
+          var ta=a.createdAt&&a.createdAt.toDate?a.createdAt.toDate().getTime():(a.id||0);
+          var tb=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().getTime():(b.id||0);
+          return tb-ta;
+        });
+        var active=localOrders.filter(function(o){return o.status!=="delivered";}).length;
         setSafe("tb2",active?"طلباتي ("+active+")":"طلباتي");
-      }, ()=>{}); // silent fail, fallback to localStorage
+        if(activeTab===2)renderOrders();
+      }, function(){
+        // Fallback: load from localStorage
+        localOrders=lOrders().filter(function(o){return o.tableId===n;});
+        if(activeTab===2)renderOrders();
+      });
+  } else {
+    // localStorage mode
+    localOrders=lOrders().filter(function(o){return o.tableId===n;});
+    renderOrders();
   }
 }
 

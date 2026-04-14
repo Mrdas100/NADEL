@@ -260,8 +260,60 @@ function renderReports(el){
 }
 
 // ══ ALL ORDERS ══
+
+// ══ RESET FUNCTIONS ══
+function resetAllOrders(){
+  if(!confirm("⚠️ حذف جميع الطلبات نهائياً؟ لا يمكن التراجع!")) return;
+  if(FB_OK&&db){
+    db.collection("orders").get().then(function(snap){
+      var batch=db.batch();
+      snap.forEach(function(d){ batch.delete(d.ref); });
+      return batch.commit();
+    }).then(function(){
+      orders=[];toast("✅ تم حذف جميع الطلبات",true);renderTab(curTab);
+    }).catch(function(e){ toast("⚠️ "+e.message,false); });
+  } else {
+    localStorage.removeItem("qamra_orders");
+    orders=[];toast("✅ تم حذف الطلبات",true);renderTab(curTab);
+  }
+}
+
+function resetTableOrders(){
+  var tc=SS.tc||10; var tp=SS.tp||"طاولة";
+  // Build table list
+  var opts=Array.from({length:tc},function(_,i){return (i+1);});
+  var sel=prompt("رقم الطاولة لتحريرها (1-"+tc+"):");
+  var n=parseInt(sel);
+  if(!n||n<1||n>tc){ toast("رقم غير صحيح",false); return; }
+  if(!confirm("تحرير "+tp+" "+n+"؟ (حذف طلباتها النشطة)")) return;
+  if(FB_OK&&db){
+    db.collection("orders").where("tableId","==",n)
+      .where("status","in",["pending","preparing","ready"])
+      .get().then(function(snap){
+        var batch=db.batch();
+        snap.forEach(function(d){ batch.delete(d.ref); });
+        return batch.commit();
+      }).then(function(){
+        toast("✅ تم تحرير "+tp+" "+n,true);
+        orders=orders.filter(function(o){return !(o.tableId===n&&o.status!=="delivered");});
+        renderTab(curTab);
+      }).catch(function(e){ toast("⚠️ "+e.code,false); });
+  } else {
+    var ors=[];try{ors=JSON.parse(localStorage.getItem("qamra_orders")||"[]");}catch(e){}
+    ors=ors.filter(function(o){return !(o.tableId===n&&o.status!=="delivered");});
+    localStorage.setItem("qamra_orders",JSON.stringify(ors));
+    orders=orders.filter(function(o){return !(o.tableId===n&&o.status!=="delivered");});
+    toast("✅ تم تحرير "+tp+" "+n,true); renderTab(curTab);
+  }
+}
+
 function renderOrders(el){
-  if(!orders.length){el.innerHTML='<div style="text-align:center;padding:60px;color:var(--tx4)">لا طلبات بعد</div>';return;}
+  // Reset buttons at top
+  var resetBar='<div style="display:flex;gap:8px;margin-bottom:14px">'
+    +'<button onclick="resetAllOrders()" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:8px 14px;color:#dc2626;font-weight:700;font-size:13px;cursor:pointer">🗑️ حذف جميع الطلبات</button>'
+    +'<button onclick="resetTableOrders()" style="background:var(--ac-bg);border:1px solid var(--ac-bd);border-radius:8px;padding:8px 14px;color:var(--ac);font-weight:700;font-size:13px;cursor:pointer">🪑 تحرير طاولة</button>'
+    +'</div>';
+  if(!orders.length){el.innerHTML=resetBar+'<div style="text-align:center;padding:40px;color:var(--tx4)">لا طلبات بعد</div>';return;}
   var bdgMap={pending:"bp",preparing:"br",ready:"bg2c",delivered:"bdd"};
   var statMap={pending:"في الانتظار",preparing:"قيد التحضير",ready:"جاهز ✅",delivered:"تم التسليم"};
   el.innerHTML='<div class="sec">'+orders.map(o=>{
